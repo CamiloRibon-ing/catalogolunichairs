@@ -6,26 +6,63 @@ body {
 }
 
 /* PRELOADER */
+/* PRELOADER */
 #preloader {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: #fff8f9;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   z-index: 9999;
+  text-align: center;
+  padding: 1rem;
 }
 
-.loader {
-  width: 50px; height: 50px;
-  border: 5px solid #f8c6d7;
-  border-top: 5px solid #e06c9f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.preloader-logo img {
+  width: 120px;
+  max-width: 40vw; /* Para que se ajuste en móviles */
+  animation: pulse 1.5s infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+#preloader p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #e06c9f;
+  font-weight: bold;
+  animation: fade 1.5s infinite;
+}
+
+@keyframes fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Ocultar al cargar */
+body.loaded #preloader {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease;
+}
+
+/* Ajustes móviles */
+@media (max-width: 768px) {
+  .preloader-logo img {
+    width: 90px;
+  }
+  #preloader p {
+    font-size: 0.9rem;
+  }
 }
 
 /* CATÁLOGO */

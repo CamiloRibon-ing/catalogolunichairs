@@ -1,7 +1,13 @@
-// Inicializar AOS (animaciones scroll)
+// ====== PRELOADER ======
+window.addEventListener('load', () => {
+  // Agregar clase 'loaded' para ocultar preloader
+  document.body.classList.add('loaded');
+});
+
+// ====== Inicializar AOS (animaciones scroll) ======
 AOS.init({ duration: 800, once: true });
 
-// Filtros de productos
+// ====== FILTROS DE PRODUCTOS ======
 const filterBtns = document.querySelectorAll(".filter-btn");
 const cards = document.querySelectorAll(".card");
 
@@ -23,55 +29,44 @@ filterBtns.forEach(btn => {
   });
 });
 
-
-// Preloader
-window.addEventListener("load", () => {
-  document.getElementById("preloader").style.display = "none";
-});
-
-
-
-
-
-
-const buttons = document.querySelectorAll('.floating-btn');
+// ====== MODALES ======
 const nequiModal = document.getElementById('nequiModal');
 const nequiBtn = document.getElementById('btn-nequi');
 const closeModal = document.getElementById('closeModal');
 
-// Modal de Nequi
-nequiBtn.addEventListener('click', () => {
-  nequiModal.style.display = 'flex';
-});
-
-closeModal.addEventListener('click', () => {
-  nequiModal.style.display = 'none';
-});
-
-window.addEventListener('click', (e) => {
-  if (e.target === nequiModal) {
-    nequiModal.style.display = 'none';
-  }
-});
-// ====== Bancolombia ======
-const btnBanco = document.getElementById('btn-bancolombia');
 const bancoModal = document.getElementById('bancoModal');
+const btnBanco = document.getElementById('btn-bancolombia');
 const closeBanco = document.getElementById('closeBanco');
 
-btnBanco.addEventListener('click', () => {
-  bancoModal.style.display = 'flex';
-});
-closeBanco.addEventListener('click', () => {
-  bancoModal.style.display = 'none';
-});
+// Modal Nequi
+if(nequiBtn && nequiModal && closeModal){
+  nequiBtn.addEventListener('click', () => {
+    nequiModal.style.display = 'flex';
+  });
+  closeModal.addEventListener('click', () => {
+    nequiModal.style.display = 'none';
+  });
+}
 
-// Cerrar si clic fuera
+// Modal Bancolombia
+if(btnBanco && bancoModal && closeBanco){
+  btnBanco.addEventListener('click', () => {
+    bancoModal.style.display = 'flex';
+  });
+  closeBanco.addEventListener('click', () => {
+    bancoModal.style.display = 'none';
+  });
+}
+
+// Cerrar modales si clic fuera de ellos
 window.addEventListener('click', (e) => {
-  if (e.target === nequiModal) nequiModal.style.display = 'none';
-  if (e.target === bancoModal) bancoModal.style.display = 'none';
+  if(e.target === nequiModal) nequiModal.style.display = 'none';
+  if(e.target === bancoModal) bancoModal.style.display = 'none';
 });
 
-// Animación campana + glow en todos los botones
+// ====== ANIMACION BOTONES FLOTANTES ======
+const buttons = document.querySelectorAll('.floating-btn');
+
 setInterval(() => {
   buttons.forEach((btn, index) => {
     setTimeout(() => {
