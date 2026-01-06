@@ -14,6 +14,32 @@
 </head>
 
 <body>
+    <!-- HEADER CON LOGIN -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="recursos/lunilogo.png" alt="Luni Logo" class="header-logo">
+                <span class="brand-name">Luni Hair Clips</span>
+            </div>
+            <nav class="header-nav">
+                <a href="#catalogo" class="nav-link">Catálogo</a>
+                <div id="auth-section" class="auth-section">
+                    <button id="header-login-btn" class="btn-login-header" style="display: none;">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </button>
+                    <div id="user-menu" class="user-menu" style="display: none;">
+                        <span class="user-name">
+                            <i class="fas fa-user-circle"></i> <span id="current-username">Admin</span>
+                        </span>
+                        <button id="header-logout-btn" class="btn-logout-header">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
     <!-- PRELOADER -->
     <div id="preloader">
         <div class="preloader-logo">
@@ -63,445 +89,9 @@
 
         </div>
 
-        <!-- GRID DE PRODUCTOS -->
+        <!-- GRID DE PRODUCTOS (se renderiza dinámicamente) -->
         <div class="product-grid">
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/floresgrandes.png" alt="Ganchito elegante">
-                <h3>Ganchito Elegante</h3>
-
-              <a href="#" class="btn">✨ Recomendado ✨</a>
-            </div>
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/orquidea.png" alt="Ganchito elegante">
-                <h3>Orquidea</h3>
-                <p>Color: Rosa y crema</p>
-                <p>Tamaño: Mediano</p>
-                <p>$6.000</p>
-
-            <a href="#" class="btn">🔥 Más vendido 🔥</a>
-            </div>
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/florperlada.png" alt="Ganchito elegante">
-                <h3>Flor perlada</h3>
-                <p>Color: blanco perla</p>
-                <p>Tamaño: Grande</p>
-                <p>$7.000</p>
-                <a href="#" class="btn">🔥 Más vendido 🔥</a>
-            </div>
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/florpastel.png" alt="Ganchito elegante">
-                <h3>Flor pastel</h3>
-                <p>Color: Azul pastel</p>
-                <p>Tamaño: Grande</p>
-                <p>$5.000</p>
-               <a href="#" class="btn">🔥 Más vendido 🔥</a>
-            </div>
-
-
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/cataleya.png" alt="Ganchito elegante">
-                <h3>Flor cataleya</h3>
-                <p>Color Lila</p>
-                <p>Tamaño: Grande</p>
-                <p>$5.000</p>
-              <a href="#" class="btn">🐾 Ideal para coleccionistas 🐾</a>
-            </div>
-
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/florginebra.png" alt="Ganchito elegante">
-                <h3>Flor Ginebra</h3>
-                <p>Color: Amarillo perlado</p>
-                <p>Tamaño: Grande</p>
-                <p>$6.500</p>
-               <a href="#" class="btn">🐾 Ideal para coleccionistas 🐾</a>
-            </div>
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/floramatatista.png" alt="Ganchito elegante">
-                <h3>Flor Amatista</h3>
-                <p>Color: Rosa Tornazol</p>
-                <p>Tamaño: Grande</p>
-                <p>$6.500 </p>
-              <a href="#" class="btn">🌸 Ideal para ti 🌸</a>
-            </div>
-
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/floraloha.png" alt="Ganchito elegante">
-                <h3>Flor Aloha</h3>
-                <p>Color: Salmon y fucsia</p>
-                <p>Tamaño: Grande</p>
-                <p>$6.000 C/U</p>
-              <a href="#" class="btn">🌸 Ideal para ti 🌸</a>
-            </div>
-
-
-            <div class="card" data-category="ganchitos" data-aos="zoom-in">
-                <img src="recursos/flormahina.png" alt="Ganchito elegante">
-                <h3>Flor Mahina</h3>
-                <p>Color: Rosa y Lila Translucidos</p>
-                <p>Tamaño: Grande</p>
-                <p>$6.000 C/U</p>
-                <a href="#" class="btn">✨ Recomendado ✨</a>
-            </div>
-
-
-
-
-            <!-- segundaseccion -->
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/fruticas.png" alt="Diadema floral">
-                <h3>Fruticas</h3>
-
-                <a href="#" class="btn">💖 Destacado 💖</a>
-            </div>
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/piñita.png" alt="Diadema floral">
-                <h3>Piñita</h3>
-                <p>Color: Amarillo y verde</p>
-                <p>Tamaño: Mediano</p>
-                <p>$15.000</p>
-                <a href="#" class="btn">🌈 Colorido y único 🌈</a>
-            </div>
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/fresita.png" alt="Diadema floral">
-                <h3>Fresita</h3>
-                <p>Color: Rojo, Verde y Amarillo</p>
-                <p>Tamaño: Mediano</p>
-                <p>$15.000</p>
-                <a href="#" class="btn">✨ Recomendado ✨</a>
-            </div>
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/sandia.png" alt="Diadema floral">
-                <h3>Sandia</h3>
-                <p>Color: Rojo</p>
-                <p>Tamaño: Mediano</p>
-                <p>$15.000</p>
-                <a href="#" class="btn">✨ Recomendado ✨</a>
-            </div>
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/potatsio.png" alt="Diadema floral">
-                <h3>Potatsio</h3>
-                <p>Color: Verde y Café</p>
-                <p>Tamaño: Mediano</p>
-                <p>$21.500</p>
-                <a href="#" class="btn">🎯 Imperdible 🎯</a>
-            </div>
-
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/banana.png" alt="Diadema floral">
-                <h3>Banana</h3>
-                <p>Color: Amarillo y Negro</p>
-                <p>Tamaño: Grande</p>
-                <p>$21.500</p>
-                <a href="#" class="btn">🌈 Colorido y único 🌈</a>
-            </div>
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/cerecita.png" alt="Diadema floral">
-                <h3>Cerezita</h3>
-                <p>Color: Rojo y Verde</p>
-                <p>Tamaño: Mediano</p>
-                <p>$18.500</p>
-                <a href="#" class="btn">⭐ Muy popular ⭐</a>
-            </div>
-
-
-            <div class="card" data-category="fruticas" data-aos="zoom-in">
-                <img src="recursos/fresitamini.png" alt="Diadema floral">
-                <h3>Fresita mini</h3>
-                <p>Color: Rojo y Verde</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$13.000</p>
-                <a href="#" class="btn">🎉 ¡Agotando rápido! 🎉</a>
-            </div>
-
-
-
-            <!-- tercera seccion -->
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/animalitos.png" alt="Diadema floral">
-                <h3>Animalitos</h3>
-
-                <a href="#" class="btn">🌟 Favorito 🌟</a>
-            </div>
-
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/gaticonegro.png" alt="Diadema floral">
-                <h3>Gatico Negro</h3>
-                <p>Color: Negro y blanco</p>
-                <p>Tamaño: Grande</p>
-                <p>$23.500</p>
-                <a href="#" class="btn">🏆 Top del mes 🏆</a>
-            </div>
-
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/tucanita.png" alt="Diadema floral">
-                <h3>Tucanita</h3>
-                <p>Color: Combinado</p>
-                <p>Tamaño: Grande</p>
-                <p>$18.000</p>
-                <a href="#" class="btn">💫 Must have 💫</a>
-            </div>
-
-
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/tucanita.png" alt="Diadema floral">
-                <h3>Orejitas</h3>
-                <p>Color: Blanco y Negro</p>
-                <p>Tamaño: Grande</p>
-                <p>$18.000</p>
-                <a href="#" class="btn">✂️ Edición limitada ✂️</a>
-            </div>
-
-
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/abejitamini.png" alt="Diadema floral">
-                <h3>Abejita Mini</h3>
-                <p>Color: Amarillo y Negro</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$7.000</p>
-                <a href="#" class="btn">🎯 Imperdible 🎯</a>
-            </div>
-
-
-            <div class="card" data-category="animalitos" data-aos="zoom-in">
-                <img src="recursos/abejita.png" alt="Diadema floral">
-                <h3>Abejita</h3>
-                <p>Color: Blanco, Amarillo y Negro</p>
-                <p>Tamaño: Mediano</p>
-                <p>$20.000</p>
-                <a href="#" class="btn">⭐ Muy popular ⭐</a>
-            </div>
-            <!-- 
-      cuartaseccion -->
-
-            <div class="card" data-category="naturales" data-aos="zoom-in">
-                <img src="recursos/Naturales.png" alt="Diadema floral">
-                <h3>Naturales</h3>
-
-                <a href="#" class="btn">💗 Te encantará 💗</a>
-            </div>
-
-            <div class="card" data-category="naturales" data-aos="zoom-in">
-                <img src="recursos/arcoiris.png" alt="Diadema floral">
-                <h3>Arco-Iris</h3>
-                <p>Color: Combinado</p>
-                <p>Tamaño: Mediano</p>
-                <p>$23.200</p>
-                <a href="#" class="btn">🌈 Colorido y único 🌈</a>
-            </div>
-
-
-            <div class="card" data-category="naturales" data-aos="zoom-in">
-                <img src="recursos/arcoiris.png" alt="Diadema floral">
-                <h3>Honguito</h3>
-                <p>Color: Rojo y blanco</p>
-                <p>Tamaño: Mediano</p>
-                <p>$17.400</p>
-                <a href="#" class="btn">⭐ Muy popular ⭐</a>
-            </div>
-
-
-            <!-- quintaseccion -->
-
-            <div class="card" data-category="pinzasclasicas" data-aos="zoom-in">
-                <img src="recursos/pinzasclasicas.png" alt="Diadema floral">
-                <h3>Pinzas Clasicas</h3>
-
-                <a href="#" class="btn">✨ Recomendado ✨</a>
-            </div>
-            <div class="card" data-category="pinzasclasicas" data-aos="zoom-in">
-                <img src="recursos/cubitoprint.png" alt="Diadema floral">
-                <h3>Cubito Print</h3>
-                <p>Color: Negro y Gris</p>
-                <p>Tamaño: Grande</p>
-                <p>$7.000</p>
-                <a href="#" class="btn">🎯 Imperdible 🎯r</a>
-            </div>
-
-            <div class="card" data-category="pinzasclasicas" data-aos="zoom-in">
-                <img src="recursos/cubitotierno.png" alt="Diadema floral">
-                <h3>Cubito Tierno</h3>
-                <p>Color: Crema</p>
-                <p>Tamaño: Grande</p>
-                <p>$7.000</p>
-                <a href="#" class="btn">🌸 Ideal para ti 🌸</a>
-            </div>
-
-            <div class="card" data-category="pinzasclasicas" data-aos="zoom-in">
-                <img src="recursos/cubitosmini.png" alt="Diadema floral">
-                <h3>Cubitos Mini</h3>
-                <p>Color: Marmolados en dorado</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$1.500 C/U</p>
-                <a href="#" class="btn">✂️ Edición limitada ✂️</a>
-            </div>
-
-
-            <!-- Sextaseccion -->
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/floresmedianas.png" alt="Diadema floral">
-                <h3>Flores medianas</h3>
-
-                <a href="#" class="btn">💖 Destacado 💖</a>
-            </div>
-
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/florecitabora.png" alt="Diadema floral">
-                <h3>Florecita Bora</h3>
-                <p>Color: Todos los de la imagen</p>
-                <p>Tamaño: Mediano</p>
-                <p>$3.000 C/U</p>
-                <a href="#" class="btn">🎯 Imperdible 🎯</a>
-            </div>
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/lirios.png" alt="Diadema floral">
-                <h3>Lirios</h3>
-                <p>Color: Tornasol Todos</p>
-                <p>Tamaño: Mediano</p>
-                <p>$3.000 C/U</p>
-                <a href="#" class="btn">🐾 Ideal para coleccionistas 🐾</a>
-            </div>
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/hawaiano.png" alt="Diadema floral">
-                <h3>Hawaiano</h3>
-                <p>Color: Todos</p>
-                <p>Tamaño: Mediano</p>
-                <p>$3.000 C/U</p>
-                <a href="#" class="btn">🌈 Colorido y único 🌈</a>
-            </div>
-
-
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/translucida.png" alt="Diadema floral">
-                <h3>Translucida</h3>
-                <p>Color: Lila, Naranja, Rosa, Amarillo translucidos</p>
-                <p>Tamaño: Mediano</p>
-                <p>$3.000 C/U</p>
-                <a href="#" class="btn">🌟 Trending 🌟</a>
-            </div>
-
-            <div class="card" data-category="floresmedianas" data-aos="zoom-in">
-                <img src="recursos/miniperlada.png" alt="Diadema floral">
-                <h3>Mini Perlada</h3>
-                <p>Color: Blanco Perlado</p>
-                <p>Tamaño: Mediano</p>
-                <p>$3.000 C/U</p>
-                <a href="#" class="btn">💫 Must have 💫</a>
-            </div>
-
-
-            <!-- Septimaseccion -->
-
-            <div class="card" data-category="floresmini" data-aos="zoom-in">
-                <img src="recursos/floresmedianas.png" alt="Diadema floral">
-                <h3>Flores Mini</h3>
-
-                <a href="#" class="btn">🏆 Top del mes 🏆</a>
-            </div>
-
-            <div class="card" data-category="floresmini" data-aos="zoom-in">
-                <img src="recursos/minirosas.png" alt="Diadema floral">
-                <h3>Mini Rosas</h3>
-                <p>Color: Todos los de la foto</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$1.500 C/U</p>
-                <a href="#" class="btn">💗 Te encantará 💗</a>
-            </div>
-
-
-
-            <div class="card" data-category="floresmini" data-aos="zoom-in">
-                <img src="recursos/minihamaica.png" alt="Diadema floral">
-                <h3>Mini Hamaica</h3>
-                <p>Color: Todos los de la foto</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$2.000 C/U</p>
-                <a href="#" class="btn">💎 Exclusivo 💎</a>
-            </div>
-
-
-            <div class="card" data-category="floresmini" data-aos="zoom-in">
-                <img src="recursos/minimargarita.png" alt="Diadema floral">
-                <h3>Mini Margarita</h3>
-                <p>Color: Rosa y Blanco</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$2.000 C/U</p>
-                <a href="#" class="btn">Comprar</a>
-            </div>
-
-            <div class="card" data-category="floresmini" data-aos="zoom-in">
-                <img src="recursos/minimetal.png" alt="Diadema floral">
-                <h3>Mini Metal</h3>
-                <p>Color: Dorado y Plateado</p>
-                <p>Tamaño: Pequeño</p>
-                <p>$4.000 C/U</p>
-                <a href="#" class="btn">🛍️ Oferta especial 🛍️</a>
-            </div>
-
-            <!-- Octavaseccion -->
-
-            <div class="card" data-category="sets" data-aos="zoom-in">
-                <img src="recursos/sets.png" alt="Diadema floral">
-                <h3>Sets</h3>
-
-                <a href="#" class="btn">💌 Regalo perfecto 💌</a>
-            </div>
-
-
-            <div class="card" data-category="sets" data-aos="zoom-in">
-                <img src="recursos/setsolanax3.png" alt="Diadema floral">
-                <h3>Set Solana X3</h3>
-                <p>Color: Rosa y tornasol</p>
-                <p>Tamaño: Grande y mini</p>
-                <p>$10.000</p>
-                <a href="#" class="btn">🔥 Más vendido 🔥</a>
-            </div>
-
-
-
-            <div class="card" data-category="sets" data-aos="zoom-in">
-                <img src="recursos/setcoral.png" alt="Diadema floral">
-                <h3>Set Coral</h3>
-                <p>Color: Blanco</p>
-                <p>Tamaño: Mediano y mini</p>
-                <p>$8.000</p>
-                <a href="#" class="btn">🌸 Ideal para ti 🌸</a>
-            </div>
-
-
-            <div class="card" data-category="sets" data-aos="zoom-in">
-                <img src="recursos/setblue.png" alt="Diadema floral">
-                <h3>Set Blue</h3>
-                <p>Color: Azul</p>
-                <p>Tamaño: Grande y Mediano</p>
-                <p>$7.000</p>
-                <a href="#" class="btn">✂️ Edición limitada ✂️</a>
-            </div>
-
-
-            <!-- Más productos aquí -->
+            <!-- Los productos se cargarán dinámicamente desde el sistema de gestión -->
         </div>
     </section>
 
@@ -576,7 +166,9 @@
     <!-- ===== MODAL QR ===== -->
     <div class="modal" id="nequiModal">
         <div class="modal-content">
-            <span class="close" id="closeModal">&times;</span>
+            <button class="modal-close-btn" id="closeModal">
+                <i class="fas fa-times"></i>
+            </button>
             <h2>Paga con Nequi</h2>
             <img src="recursos/Nequilogo.png" alt="QR Nequi">
             <p><strong>Nequi:</strong> 304 495 2240</p>
@@ -593,9 +185,431 @@
   </div>
 </div> -->
 
+    <!-- ===== MODAL CARRITO ===== -->
+    <div class="modal" id="cart-modal">
+        <div class="modal-content cart-modal-content">
+            <button class="modal-close-btn" id="close-cart">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>🛒 Tu Carrito</h2>
+            <div id="cart-items" class="cart-items"></div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <strong>Total: <span id="cart-total">$0</span></strong>
+                </div>
+                <button id="checkout-btn" class="btn btn-checkout">Proceder al Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL CHECKOUT ===== -->
+    <div class="modal" id="checkout-modal">
+        <div class="modal-content checkout-modal-content">
+            <button class="modal-close-btn" id="close-checkout">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="checkout-header">
+                <h2><i class="fas fa-shipping-fast"></i> Información de Envío</h2>
+                <p>Completa tus datos para procesar tu pedido</p>
+            </div>
+            <form id="customer-form" class="customer-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="customer-name">
+                            <i class="fas fa-user"></i> Nombre Completo *
+                        </label>
+                        <input type="text" id="customer-name" required placeholder="Ej: María García">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-phone">
+                            <i class="fas fa-phone"></i> Teléfono *
+                        </label>
+                        <input type="tel" id="customer-phone" required placeholder="Ej: 3001234567">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="customer-email">
+                        <i class="fas fa-envelope"></i> Email (opcional)
+                    </label>
+                    <input type="email" id="customer-email" placeholder="Ej: maria@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="customer-address">
+                        <i class="fas fa-map-marker-alt"></i> Dirección *
+                    </label>
+                    <textarea id="customer-address" required rows="2" placeholder="Dirección completa"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="customer-city">
+                        <i class="fas fa-city"></i> Ciudad *
+                    </label>
+                    <input type="text" id="customer-city" required placeholder="Ej: Bogotá">
+                </div>
+                <button type="button" id="send-whatsapp-btn" class="btn btn-whatsapp">
+                    <i class="fab fa-whatsapp"></i> Enviar Pedido por WhatsApp
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL PANEL ADMIN ===== -->
+    <div class="modal" id="admin-modal">
+        <div class="modal-content admin-modal-content">
+            <button class="modal-close-btn" id="admin-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="admin-header">
+                <div>
+                    <h2><i class="fas fa-cog"></i> Panel de Administración</h2>
+                    <p>Gestiona tu catálogo de productos</p>
+                </div>
+                <button id="admin-logout" class="btn-logout" title="Cerrar Sesión">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </button>
+                <button class="admin-tab" data-tab="orders" onclick="showAdminTab('orders')">
+                    <i class="fas fa-shopping-bag"></i> Ventas
+                </button>
+                <button class="admin-tab" data-tab="categories" onclick="showAdminTab('categories')">
+                    <i class="fas fa-folder"></i> Categorías
+                </button>
+                <button class="admin-tab" data-tab="products" onclick="showAdminTab('products')">
+                    <i class="fas fa-box"></i> Productos
+                </button>
+                <button class="admin-tab" data-tab="add-product" onclick="showAdminTab('add-product')">
+                    <i class="fas fa-plus-circle"></i> Agregar Producto
+                </button>
+            </div>
+
+            <!-- TAB DASHBOARD/ESTADÍSTICAS -->
+            <div id="admin-dashboard-tab" class="admin-tab-content active">
+                <h3><i class="fas fa-chart-line"></i> Dashboard de Estadísticas</h3>
+                
+                <!-- Estadísticas generales -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Ingresos Totales</h4>
+                            <p class="stat-value" id="stat-total-revenue">$0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orders">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Pedidos Confirmados</h4>
+                            <p class="stat-value" id="stat-total-orders">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon average">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Ticket Promedio</h4>
+                            <p class="stat-value" id="stat-average-order">$0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Pendientes</h4>
+                            <p class="stat-value" id="stat-pending">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficas -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <canvas id="top-products-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="status-pie-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Ventas por período -->
+                <div class="period-tabs">
+                    <button class="period-tab active" onclick="changePeriodChart('day')">Por Día</button>
+                    <button class="period-tab" onclick="changePeriodChart('week')">Por Semana</button>
+                    <button class="period-tab" onclick="changePeriodChart('month')">Por Mes</button>
+                </div>
+                <div class="chart-container full-width">
+                    <canvas id="sales-day-chart"></canvas>
+                </div>
+
+                <!-- Productos con poco stock -->
+                <div class="low-stock-section">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Productos con Poco Stock</h4>
+                    <div id="low-stock-list" class="low-stock-list"></div>
+                </div>
+            </div>
+
+            <!-- TAB VENTAS/PEDIDOS -->
+            <div id="admin-orders-tab" class="admin-tab-content active">
+                <div class="tab-header">
+                    <h3><i class="fas fa-shopping-bag"></i> Gestión de Ventas</h3>
+                    <div class="orders-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total:</span>
+                            <span class="stat-value" id="orders-total">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Ingresos:</span>
+                            <span class="stat-value" id="orders-revenue">$0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="orders-filters">
+                    <button class="filter-status active" data-status="all" onclick="filterOrders('all')">Todos</button>
+                    <button class="filter-status" data-status="pendiente" onclick="filterOrders('pendiente')">Pendientes</button>
+                    <button class="filter-status" data-status="confirmado" onclick="filterOrders('confirmado')">Confirmados</button>
+                    <button class="filter-status" data-status="en_preparacion" onclick="filterOrders('en_preparacion')">En Preparación</button>
+                    <button class="filter-status" data-status="enviado" onclick="filterOrders('enviado')">Enviados</button>
+                    <button class="filter-status" data-status="entregado" onclick="filterOrders('entregado')">Entregados</button>
+                    <button class="filter-status" data-status="cancelado" onclick="filterOrders('cancelado')">Cancelados</button>
+                </div>
+                <div id="admin-orders-list" class="admin-orders-list"></div>
+            </div>
+
+            <!-- TAB CATEGORÍAS -->
+            <div id="admin-categories-tab" class="admin-tab-content">
+                <div class="tab-header">
+                    <h3><i class="fas fa-folder"></i> Gestionar Categorías</h3>
+                    <button id="admin-add-category" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Categoría
+                    </button>
+                </div>
+                <form id="category-form" class="category-form" style="display: none;">
+                    <h4 id="category-form-title">Agregar Nueva Categoría</h4>
+                    <input type="hidden" id="category-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category-name">Nombre de la Categoría *</label>
+                            <input type="text" id="category-name" required placeholder="Ej: Ganchitos">
+                        </div>
+                        <div class="form-group">
+                            <label for="category-slug">Slug *</label>
+                            <input type="text" id="category-slug" required placeholder="Ej: ganchitos">
+                            <small>URL amigable (sin espacios, minúsculas)</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category-icon">Icono (Emoji)</label>
+                            <input type="text" id="category-icon" placeholder="🎀" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="category-active">
+                                <input type="checkbox" id="category-active" checked>
+                                Categoría Activa
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="save-category-btn" class="btn btn-primary">Guardar Categoría</button>
+                        <button type="button" onclick="document.getElementById('category-form').style.display='none'" class="btn btn-secondary">Cancelar</button>
+                    </div>
+                </form>
+                <div id="admin-categories-list" class="admin-categories-list"></div>
+            </div>
+
+            <!-- TAB PRODUCTOS -->
+            <div id="admin-products-tab" class="admin-tab-content">
+                <h3><i class="fas fa-box"></i> Gestionar Productos</h3>
+                <div id="admin-products-list" class="admin-products-list"></div>
+            </div>
+
+            <!-- TAB AGREGAR PRODUCTO -->
+            <div id="admin-add-tab" class="admin-tab-content">
+                <h3 id="form-title"><i class="fas fa-plus-circle"></i> Agregar Nuevo Producto</h3>
+                <form id="product-form" class="product-form" style="display: none;">
+                    <input type="hidden" id="product-id">
+                    
+                    <div class="form-section">
+                        <h4>Información Básica</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="product-name">Nombre del Producto *</label>
+                                <input type="text" id="product-name" required placeholder="Ej: Orquidea">
+                            </div>
+                            <div class="form-group">
+                                <label for="product-category">Categoría *</label>
+                                <select id="product-category" required>
+                                    <option value="">Seleccione una categoría</option>
+                                </select>
+                                <small>Debes crear categorías primero</small>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="product-price">Precio *</label>
+                                <input type="number" id="product-price" min="0" step="100" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="product-stock">Stock Disponible</label>
+                                <input type="number" id="product-stock" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Características</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="product-color">Color</label>
+                                <input type="text" id="product-color" placeholder="Ej: Rosa y crema">
+                            </div>
+                            <div class="form-group">
+                                <label for="product-size">Tamaño</label>
+                                <select id="product-size">
+                                    <option value="">Seleccione un tamaño</option>
+                                    <option value="Pequeño">Pequeño</option>
+                                    <option value="Mediano">Mediano</option>
+                                    <option value="Grande">Grande</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-description">Descripción</label>
+                            <textarea id="product-description" rows="3" placeholder="Descripción del producto"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Imagen del Producto</h4>
+                        <div class="image-upload-container">
+                            <div class="image-preview-wrapper">
+                                <img id="product-image-preview" src="recursos/lunilogo.png" alt="Preview">
+                                <div class="upload-progress-container">
+                                    <div id="upload-progress" class="upload-progress"></div>
+                                </div>
+                            </div>
+                            <div class="upload-controls">
+                                <label for="product-image-input" class="btn btn-upload">
+                                    <i class="fas fa-cloud-upload-alt"></i> Subir Imagen
+                                </label>
+                                <input type="file" id="product-image-input" accept="image/*" style="display: none;">
+                                <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="product-image-url">URL de Imagen (Cloudinary)</label>
+                                <input type="text" id="product-image-url" placeholder="Se llenará automáticamente al subir">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="product-available">
+                                <input type="checkbox" id="product-available" checked>
+                                Producto Disponible
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="save-product-btn" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Producto
+                        </button>
+                        <button type="button" onclick="document.getElementById('product-form').style.display='none'" class="btn btn-secondary">Cancelar</button>
+                    </div>
+                </form>
+                <button id="admin-add-product" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Agregar Nuevo Producto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTÓN CARRITO FLOTANTE ===== -->
+    <div class="cart-floating-btn" id="cart-btn" onclick="openCart()">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-count" class="cart-count"></span>
+    </div>
+
     <!-- SCRIPTS -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/cloudinary.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/orders.js"></script>
+    <script src="js/invoice.js"></script>
+    <script src="js/checkout.js"></script>
+    <script src="js/statistics.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Función para cambiar tabs en admin
+        function showAdminTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'dashboard') {
+                document.querySelector('.admin-tab[data-tab="dashboard"]')?.classList.add('active');
+                document.getElementById('admin-dashboard-tab')?.classList.add('active');
+                adminPanel.loadDashboard();
+            } else if (tab === 'orders') {
+                document.querySelector('.admin-tab[data-tab="orders"]')?.classList.add('active');
+                document.getElementById('admin-orders-tab')?.classList.add('active');
+                adminPanel.loadOrdersList();
+                adminPanel.updateOrdersStats();
+            } else if (tab === 'categories') {
+                document.querySelector('.admin-tab[data-tab="categories"]')?.classList.add('active');
+                document.getElementById('admin-categories-tab')?.classList.add('active');
+                adminPanel.loadCategoriesList();
+            } else if (tab === 'products') {
+                document.querySelector('.admin-tab[data-tab="products"]')?.classList.add('active');
+                document.getElementById('admin-products-tab')?.classList.add('active');
+                adminPanel.loadProductsList();
+            } else if (tab === 'add-product') {
+                document.querySelector('.admin-tab[data-tab="add-product"]')?.classList.add('active');
+                document.getElementById('admin-add-tab')?.classList.add('active');
+            }
+        }
+
+        // Función para filtrar pedidos
+        function filterOrders(status) {
+            document.querySelectorAll('.filter-status').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.filter-status[data-status="${status}"]`)?.classList.add('active');
+            adminPanel.loadOrdersList(status);
+        }
+
+        // Función para cambiar período de gráfica
+        let currentPeriod = 'day';
+        function changePeriodChart(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Destruir gráfica anterior
+            if (statisticsManager.charts['sales-day-chart']) {
+                statisticsManager.charts['sales-day-chart'].destroy();
+            }
+            
+            // Crear nueva gráfica
+            statisticsManager.renderSalesByPeriodChart('sales-day-chart', period);
+        }
+
+        // Script para Vercel Analytics
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 
 </html>
