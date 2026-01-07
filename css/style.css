@@ -2125,6 +2125,7 @@ footer .social-icons a:hover i {
   scrollbar-width: thin;
   min-height: 50px;
   align-items: center;
+  position: relative; /* Para el dropdown */
 }
 
 .admin-tabs::-webkit-scrollbar {
@@ -3290,6 +3291,34 @@ footer .social-icons a:hover i {
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
+}
+
+/* Responsive para botones de órdenes */
+@media (max-width: 768px) {
+  .order-actions {
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .order-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+  }
+  
+  .admin-order-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .order-info h4 {
+    font-size: 1.1rem;
+  }
+  
+  .order-info p {
+    font-size: 0.9rem;
+  }
 }
 
 .btn-view,
@@ -4613,6 +4642,8 @@ footer .social-icons a:hover i {
     color: #495057;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1001;
   }
 
   /* Solo mostrar hamburguesa en mobile */
@@ -4652,19 +4683,64 @@ footer .social-icons a:hover i {
   .admin-tabs-toggle.active i {
     transform: rotate(180deg) !important;
   }
+
+  /* Icono hamburguesa animado */
+  .hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 24px;
+    height: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .hamburger-icon span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background: #495057;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .admin-tabs-toggle:hover .hamburger-icon span {
+    background: var(--primary-color);
+  }
+
+  .admin-tabs-toggle.active .hamburger-icon span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+    background: var(--primary-color);
+  }
+
+  .admin-tabs-toggle.active .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .admin-tabs-toggle.active .hamburger-icon span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+    background: var(--primary-color);
+  }
   
   /* Container de tabs oculto por defecto */
   .admin-tabs-container {
     display: none !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
     flex-direction: column !important;
     gap: 8px !important;
-    margin-top: 15px !important;
+    margin-top: 8px !important;
     padding: 15px !important;
     background: white !important;
     border-radius: 12px !important;
     border: 2px solid #e9ecef !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
     animation: slideDown 0.3s ease !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
   }
   
   .admin-tabs-container.show {

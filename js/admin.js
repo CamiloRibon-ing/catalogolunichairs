@@ -170,7 +170,11 @@ class AdminPanel {
       adminTabs.innerHTML = `
         <div class="admin-tabs-toggle" onclick="adminPanel.toggleMobileTabsMenu()">
           <span class="current-tab-text">${activeTabText}</span>
-          <i class="fas fa-chevron-down"></i>
+          <div class="hamburger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
         <div class="admin-tabs-container">
           <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
@@ -223,10 +227,36 @@ class AdminPanel {
       if (isOpen) {
         container.classList.remove('show');
         toggle.classList.remove('active');
+        this.removeMobileMenuListener();
       } else {
         container.classList.add('show');
         toggle.classList.add('active');
+        this.addMobileMenuListener();
       }
+    }
+  }
+
+  // Agregar listener para cerrar menú al hacer click fuera
+  addMobileMenuListener() {
+    if (!this.mobileMenuListener) {
+      this.mobileMenuListener = (e) => {
+        const container = document.querySelector('.admin-tabs-container');
+        const toggle = document.querySelector('.admin-tabs-toggle');
+        
+        if (container && toggle && !toggle.contains(e.target) && !container.contains(e.target)) {
+          container.classList.remove('show');
+          toggle.classList.remove('active');
+          this.removeMobileMenuListener();
+        }
+      };
+    }
+    document.addEventListener('click', this.mobileMenuListener);
+  }
+
+  // Remover listener del menú mobile
+  removeMobileMenuListener() {
+    if (this.mobileMenuListener) {
+      document.removeEventListener('click', this.mobileMenuListener);
     }
   }
 
@@ -253,6 +283,7 @@ class AdminPanel {
     if (container && toggle) {
       container.classList.remove('show');
       toggle.classList.remove('active');
+      this.removeMobileMenuListener();
     }
   }
 
