@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PDF Simple</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Test de PDF - Luni Chairs</h1>
+    <button id="testPDF" onclick="testPDFGeneration()">Generar PDF de Prueba</button>
+    <div id="status"></div>
+
+    <script>
+        function testPDFGeneration() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Generando PDF...';
+            
+            try {
+                // Crear PDF simple
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Factura Luni Chairs', 20, 20);
+                
+                doc.setFontSize(12);
+                doc.text('Cliente: Juan Perez', 20, 40);
+                doc.text('Email: juan@ejemplo.com', 20, 50);
+                doc.text('Telefono: 123-456-7890', 20, 60);
+                
+                doc.text('Producto: Silla Ejecutiva', 20, 80);
+                doc.text('Precio: $250,000 COP', 20, 90);
+                doc.text('Total: $250,000 COP', 20, 110);
+                
+                // Descargar PDF
+                doc.save('factura-test.pdf');
+                status.innerHTML = '✅ PDF generado correctamente!';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                status.innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

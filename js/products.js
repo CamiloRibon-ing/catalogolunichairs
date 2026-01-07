@@ -1,18 +1,77 @@
-// Sistema de gestión de productos
+// Sistema de gestión de productos conectado a Supabase
 class ProductManager {
   constructor() {
-    this.products = this.loadProducts();
-    this.categories = ['ganchitos', 'fruticas', 'animalitos', 'naturales', 'pinzasclasicas', 'floresmedianas', 'floresmini', 'sets'];
+    this.products = [];
+    this.initialized = false;
     this.sizes = ['Pequeño', 'Mediano', 'Grande'];
   }
 
-  loadProducts() {
-    const stored = localStorage.getItem('luni_products');
-    if (stored) {
-      return JSON.parse(stored);
+  // Inicializar y cargar productos
+  async initialize() {
+    if (!this.initialized) {
+      // Primero cargar productos locales como base
+      const localProducts = this.getInitialProducts();
+      
+      // Luego cargar desde Supabase y combinar
+      const supabaseProducts = await this.loadProductsFromSupabase();
+      
+      // Combinar productos locales y de Supabase (evitar duplicados por nombre)
+      this.products = this.mergeProducts(localProducts, supabaseProducts);
+      this.initialized = true;
     }
-    // Productos iniciales basados en el HTML actual
-    return this.getInitialProducts();
+  }
+
+  // Cargar productos desde Supabase
+  async loadProductsFromSupabase() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error cargando productos de Supabase:', error);
+        return [];
+      }
+
+      // Mapear productos de Supabase al formato local
+      return data.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: parseFloat(product.price),
+        color: product.color,
+        size: product.size,
+        image: product.image,
+        available: product.available,
+        stock: product.stock || 0,
+        description: product.description,
+        createdAt: new Date(product.created_at).getTime(),
+        fromSupabase: true // Marcador para identificar origen
+      }));
+
+    } catch (error) {
+      console.error('Error conectando a Supabase para productos:', error);
+      return [];
+    }
+  }
+
+  // Combinar productos locales y de Supabase evitando duplicados
+  mergeProducts(localProducts, supabaseProducts) {
+    const merged = [...localProducts];
+    
+    supabaseProducts.forEach(supabaseProduct => {
+      // Verificar si ya existe un producto local con el mismo nombre
+      const existsLocally = merged.some(local => 
+        local.name.toLowerCase() === supabaseProduct.name.toLowerCase()
+      );
+      
+      if (!existsLocally) {
+        merged.push(supabaseProduct);
+      }
+    });
+    
+    return merged;
   }
 
   getInitialProducts() {
@@ -442,34 +501,164 @@ class ProductManager {
   }
 
   saveProducts() {
-    localStorage.setItem('luni_products', JSON.stringify(this.products));
+    // Guardar solo productos locales (no los de Supabase) en localStorage como respaldo
+    const localProducts = this.products.filter(p => !p.fromSupabase);
+    localStorage.setItem('luni_products', JSON.stringify(localProducts));
   }
 
-  addProduct(product) {
-    const newProduct = {
-      id: 'prod-' + Date.now(),
-      ...product,
-      available: product.available !== undefined ? product.available : true,
-      stock: product.stock || 0
-    };
-    this.products.push(newProduct);
-    this.saveProducts();
-    return newProduct;
-  }
+  async addProduct(product) {
+    try {
+      // Agregar a Supabase
+      const { data, error } = await supabaseClient
+        .from('products')
+        .insert({
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          color: product.color || '',
+          size: product.size || '',
+          stock: product.stock || 0,
+          available: product.available !== undefined ? product.available : true,
+          description: product.description || '',
+          image: product.image || ''
+        })
+        .select()
+        .single();
 
-  updateProduct(id, updates) {
-    const index = this.products.findIndex(p => p.id === id);
-    if (index !== -1) {
-      this.products[index] = { ...this.products[index], ...updates };
+      if (error) {
+        console.error('Error agregando producto a Supabase:', error);
+        return null;
+      }
+
+      // Agregar a la lista local
+      const newProduct = {
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        price: parseFloat(data.price),
+        color: data.color,
+        size: data.size,
+        image: data.image,
+        available: data.available,
+        stock: data.stock,
+        description: data.description,
+        createdAt: new Date(data.created_at).getTime(),
+        fromSupabase: true
+      };
+
+      this.products.push(newProduct);
+      return newProduct;
+
+    } catch (error) {
+      console.error('Error conectando a Supabase:', error);
+      // Fallback: agregar solo localmente
+      const newProduct = {
+        id: 'prod-' + Date.now(),
+        ...product,
+        available: product.available !== undefined ? product.available : true,
+        stock: product.stock || 0,
+        fromSupabase: false
+      };
+      this.products.push(newProduct);
       this.saveProducts();
-      return this.products[index];
+      return newProduct;
     }
-    return null;
   }
 
-  deleteProduct(id) {
-    this.products = this.products.filter(p => p.id !== id);
-    this.saveProducts();
+  async updateProduct(id, updates) {
+    const product = this.getProduct(id);
+    if (!product) return null;
+
+    try {
+      // Si el producto es de Supabase, actualizar en Supabase
+      if (product.fromSupabase) {
+        const updateData = {};
+        if (updates.name !== undefined) updateData.name = updates.name;
+        if (updates.category !== undefined) updateData.category = updates.category;
+        if (updates.price !== undefined) updateData.price = updates.price;
+        if (updates.color !== undefined) updateData.color = updates.color;
+        if (updates.size !== undefined) updateData.size = updates.size;
+        if (updates.stock !== undefined) updateData.stock = updates.stock;
+        if (updates.available !== undefined) updateData.available = updates.available;
+        if (updates.description !== undefined) updateData.description = updates.description;
+        if (updates.image !== undefined) updateData.image = updates.image;
+
+        const { data, error } = await supabaseClient
+          .from('products')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error actualizando producto en Supabase:', error);
+          return null;
+        }
+
+        // Actualizar en lista local
+        const updatedProduct = {
+          id: data.id,
+          name: data.name,
+          category: data.category,
+          price: parseFloat(data.price),
+          color: data.color,
+          size: data.size,
+          image: data.image,
+          available: data.available,
+          stock: data.stock,
+          description: data.description,
+          createdAt: new Date(data.created_at).getTime(),
+          fromSupabase: true
+        };
+
+        const index = this.products.findIndex(p => p.id === id);
+        if (index !== -1) {
+          this.products[index] = updatedProduct;
+        }
+
+        return updatedProduct;
+      } else {
+        // Producto local: actualizar solo localmente
+        const index = this.products.findIndex(p => p.id === id);
+        if (index !== -1) {
+          this.products[index] = { ...this.products[index], ...updates };
+          this.saveProducts();
+          return this.products[index];
+        }
+      }
+    } catch (error) {
+      console.error('Error actualizando producto:', error);
+      return null;
+    }
+  }
+
+  async deleteProduct(id) {
+    const product = this.getProduct(id);
+    if (!product) return false;
+
+    try {
+      // Si el producto es de Supabase, eliminar de Supabase
+      if (product.fromSupabase) {
+        const { error } = await supabaseClient
+          .from('products')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error eliminando producto de Supabase:', error);
+          return false;
+        }
+      }
+
+      // Eliminar de lista local
+      this.products = this.products.filter(p => p.id !== id);
+      this.saveProducts();
+      return true;
+
+    } catch (error) {
+      console.error('Error eliminando producto:', error);
+      return false;
+    }
   }
 
   getProduct(id) {
@@ -477,8 +666,28 @@ class ProductManager {
   }
 
   getProductsByCategory(category) {
-    if (category === 'all') return this.products;
-    return this.products.filter(p => p.category === category);
+    if (category === 'all') return this.products.filter(p => p.available);
+    return this.products.filter(p => p.category === category && p.available);
+  }
+
+  getAllProducts() {
+    return this.products;
+  }
+
+  getAvailableProducts() {
+    return this.products.filter(p => p.available);
+  }
+
+  searchProducts(query) {
+    const searchTerm = query.toLowerCase();
+    return this.products.filter(p => 
+      p.available && (
+        p.name.toLowerCase().includes(searchTerm) ||
+        p.category.toLowerCase().includes(searchTerm) ||
+        p.color.toLowerCase().includes(searchTerm) ||
+        p.description.toLowerCase().includes(searchTerm)
+      )
+    );
   }
 
   checkAvailability(id, quantity = 1) {
@@ -489,18 +698,57 @@ class ProductManager {
     return true;
   }
 
-  decreaseStock(id, quantity = 1) {
+  async decreaseStock(id, quantity = 1) {
     const product = this.getProduct(id);
     if (product && product.stock !== undefined) {
-      product.stock = Math.max(0, product.stock - quantity);
-      if (product.stock === 0) {
-        product.available = false;
-      }
-      this.saveProducts();
+      const newStock = Math.max(0, product.stock - quantity);
+      const updates = { 
+        stock: newStock,
+        available: newStock > 0 
+      };
+      
+      await this.updateProduct(id, updates);
+    }
+  }
+
+  async increaseStock(id, quantity = 1) {
+    const product = this.getProduct(id);
+    if (product) {
+      const newStock = (product.stock || 0) + quantity;
+      const updates = { 
+        stock: newStock,
+        available: true 
+      };
+      
+      await this.updateProduct(id, updates);
     }
   }
 }
 
-// Instancia global
+// Instancia global del ProductManager
 const productManager = new ProductManager();
+
+// Inicializar productos cuando se cargue la página
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await productManager.initialize();
+    console.log('ProductManager inicializado correctamente');
+    console.log('Productos cargados:', productManager.getAllProducts().length);
+  } catch (error) {
+    console.error('Error inicializando ProductManager:', error);
+  }
+});
+
+// Función auxiliar para esperar a que ProductManager esté listo
+async function waitForProducts() {
+  if (!productManager.initialized) {
+    await productManager.initialize();
+  }
+  return productManager;
+}
+
+// Exportar para uso en otros módulos
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ProductManager, productManager };
+}
 

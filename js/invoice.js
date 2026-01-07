@@ -1,313 +1,426 @@
 // Sistema de generación de facturas
 class InvoiceGenerator {
-  generateInvoiceHTML(order) {
-    const date = new Date(order.createdAt);
-    const formattedDate = date.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    constructor() {
+        console.log('📋 Inicializando InvoiceGenerator...');
+        this.isReady = false;
+        this.initializeWhenReady();
+    }
 
-    return `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factura ${order.orderNumber} - Luni Hair Clips</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #fff8f9;
-      padding: 20px;
-      color: #333;
+    async initializeWhenReady() {
+        // Esperar hasta que jsPDF esté disponible
+        let attempts = 0;
+        const maxAttempts = 50; // 5 segundos máximo
+        
+        while (attempts < maxAttempts) {
+            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+                this.isReady = true;
+                console.log('✅ InvoiceGenerator listo - jsPDF disponible');
+                return;
+            }
+            
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.error('❌ jsPDF no se cargó después de 5 segundos');
     }
-    .invoice-container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    .invoice-header {
-      background: linear-gradient(135deg, #e06c9f 0%, #ff84b6 100%);
-      padding: 30px;
-      color: white;
-      text-align: center;
-    }
-    .invoice-header h1 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-    .invoice-header p {
-      font-size: 1rem;
-      opacity: 0.9;
-    }
-    .invoice-body {
-      padding: 30px;
-    }
-    .invoice-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #e06c9f;
-    }
-    .info-section h3 {
-      color: #e06c9f;
-      margin-bottom: 15px;
-      font-size: 1.1rem;
-    }
-    .info-section p {
-      margin: 5px 0;
-      color: #666;
-    }
-    .order-number {
-      background: #fff5f8;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .order-number h2 {
-      color: #e06c9f;
-      font-size: 1.5rem;
-    }
-    .products-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-    }
-    .products-table thead {
-      background: #e06c9f;
-      color: white;
-    }
-    .products-table th,
-    .products-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    .products-table th {
-      font-weight: 600;
-    }
-    .products-table tbody tr:hover {
-      background: #fff5f8;
-    }
-    .total-section {
-      background: #fff5f8;
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 10px 0;
-      font-size: 1.1rem;
-    }
-    .total-final {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #e06c9f;
-      border-top: 2px solid #e06c9f;
-      padding-top: 10px;
-      margin-top: 10px;
-    }
-    .invoice-footer {
-      background: #f9f9f9;
-      padding: 20px;
-      text-align: center;
-      color: #666;
-      font-size: 0.9rem;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-    .status-pendiente { background: #fff3cd; color: #856404; }
-    .status-confirmado { background: #d1ecf1; color: #0c5460; }
-    .status-en_preparacion { background: #d4edda; color: #155724; }
-    .status-enviado { background: #cce5ff; color: #004085; }
-    .status-entregado { background: #d4edda; color: #155724; }
-    .status-cancelado { background: #f8d7da; color: #721c24; }
-  </style>
-</head>
-<body>
-  <div class="invoice-container">
-    <div class="invoice-header">
-      <h1>🌸 Luni Hair Clips 🌸</h1>
-      <p>Factura de Compra</p>
-    </div>
-    <div class="invoice-body">
-      <div class="order-number">
-        <h2>📋 ${order.orderNumber}</h2>
-        <p>Fecha: ${formattedDate}</p>
-        <span class="status-badge status-${order.status}">${this.getStatusLabel(order.status)}</span>
-      </div>
-      
-      <div class="invoice-info">
-        <div class="info-section">
-          <h3>💝 Información del Cliente</h3>
-          <p><strong>Nombre:</strong> ${order.customerInfo.name}</p>
-          <p><strong>Teléfono:</strong> ${order.customerInfo.phone}</p>
-          ${order.customerInfo.email ? `<p><strong>Email:</strong> ${order.customerInfo.email}</p>` : ''}
-        </div>
-        <div class="info-section">
-          <h3>📍 Dirección de Envío</h3>
-          <p>${order.customerInfo.address}</p>
-          <p>${order.customerInfo.city}</p>
-        </div>
-      </div>
 
-      <h3 style="color: #e06c9f; margin: 20px 0 10px 0;">🛍️ Productos</h3>
-      <table class="products-table">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio Unit.</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${order.items.map(item => `
-            <tr>
-              <td>
-                <strong>${item.productName}</strong>
-                ${item.color ? `<br><small>Color: ${item.color}</small>` : ''}
-                ${item.size ? `<br><small>Tamaño: ${item.size}</small>` : ''}
-              </td>
-              <td>${item.quantity}</td>
-              <td>$${item.price.toLocaleString('es-CO')}</td>
-              <td>$${item.subtotal.toLocaleString('es-CO')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <div class="total-section">
-        <div class="total-row">
-          <span>Subtotal:</span>
-          <span>$${order.subtotal.toLocaleString('es-CO')}</span>
-        </div>
-        ${order.discount > 0 ? `
-        <div class="total-row">
-          <span>Descuento:</span>
-          <span>-$${order.discount.toLocaleString('es-CO')}</span>
-        </div>
-        ` : ''}
-        ${order.shipping > 0 ? `
-        <div class="total-row">
-          <span>Envío:</span>
-          <span>$${order.shipping.toLocaleString('es-CO')}</span>
-        </div>
-        ` : ''}
-        <div class="total-row total-final">
-          <span>Total:</span>
-          <span>$${order.total.toLocaleString('es-CO')}</span>
-        </div>
-      </div>
-    </div>
-    <div class="invoice-footer">
-      <p>✨ Gracias por tu compra ✨</p>
-      <p>Luni Hair Clips - Accesorios únicos para tu cabello</p>
-      <p>WhatsApp: 304 495 2240 | Instagram: @luni_hairclips</p>
-    </div>
-  </div>
-</body>
-</html>
-    `;
-  }
-
-  generateInvoiceText(order) {
-    const date = new Date(order.createdAt);
-    const formattedDate = date.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    let text = `🌸 *FACTURA - LUNI HAIR CLIPS* 🌸\n\n`;
-    text += `📋 *Número de Pedido:* ${order.orderNumber}\n`;
-    text += `📅 *Fecha:* ${formattedDate}\n`;
-    text += `📊 *Estado:* ${this.getStatusLabel(order.status)}\n\n`;
-    
-    text += `💝 *INFORMACIÓN DEL CLIENTE*\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `Nombre: ${order.customerInfo.name}\n`;
-    text += `Teléfono: ${order.customerInfo.phone}\n`;
-    if (order.customerInfo.email) {
-      text += `Email: ${order.customerInfo.email}\n`;
+    // Esperar a que jsPDF esté disponible
+    async waitForJsPDF() {
+        if (!this.isReady) {
+            await this.initializeWhenReady();
+        }
+        
+        console.log('🔍 Verificando disponibilidad de jsPDF...');
+        console.log('   - window.jspdf:', typeof window.jspdf);
+        console.log('   - window.jspdf.jsPDF:', typeof window.jspdf?.jsPDF);
+        
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            console.error('❌ jsPDF no está disponible');
+            console.error('   - window.jspdf:', window.jspdf);
+            throw new Error('jsPDF no está disponible. Verifique que la librería esté cargada correctamente.');
+        }
+        
+        console.log('✅ jsPDF verificado y disponible');
     }
-    text += `Dirección: ${order.customerInfo.address}\n`;
-    text += `Ciudad: ${order.customerInfo.city}\n\n`;
 
-    text += `🛍️ *PRODUCTOS*\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    order.items.forEach((item, index) => {
-      text += `${index + 1}. *${item.productName}*\n`;
-      if (item.color) text += `   💗 Color: ${item.color}\n`;
-      if (item.size) text += `   📏 Tamaño: ${item.size}\n`;
-      text += `   🔢 Cantidad: ${item.quantity}\n`;
-      text += `   💰 Precio: $${item.price.toLocaleString('es-CO')}\n`;
-      text += `   💵 Subtotal: $${item.subtotal.toLocaleString('es-CO')}\n\n`;
-    });
-
-    text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 *RESUMEN*\n`;
-    text += `Subtotal: $${order.subtotal.toLocaleString('es-CO')}\n`;
-    if (order.discount > 0) {
-      text += `Descuento: -$${order.discount.toLocaleString('es-CO')}\n`;
+    // Generar PDF de la factura
+    async generatePDFInvoice(order) {
+        try {
+            await this.waitForJsPDF();
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Colores y configuración
+            const primaryColor = [224, 108, 159]; // Rosa de Luni
+            const secondaryColor = [240, 240, 240]; // Gris claro
+            const textDarkColor = [33, 33, 33]; // Gris oscuro
+            
+            // ===== ENCABEZADO =====
+            // Fondo del encabezado
+            doc.setFillColor(...primaryColor);
+            doc.rect(0, 0, 210, 45, 'F');
+            
+            // Logo y título
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Luni Hair Clips', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Factura de Compra', 105, 30, { align: 'center' });
+            
+            // Información de contacto en el encabezado
+            doc.setFontSize(9);
+            doc.text('WhatsApp: +57 300 123 4567', 105, 38, { align: 'center' });
+            
+            // ===== INFORMACIÓN DE LA FACTURA =====
+            doc.setTextColor(...textDarkColor);
+            let yPos = 55;
+            
+            // Número de orden y fecha
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            const orderNumber = order.orderNumber || order.order_number || order.id;
+            const createdAt = order.createdAt || order.created_at || order.date || new Date();
+            
+            doc.text(`Factura N°: ${orderNumber}`, 20, yPos);
+            doc.text(`Fecha: ${new Date(createdAt).toLocaleDateString('es-CO')}`, 140, yPos);
+            yPos += 8;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Estado: ${this.getStatusLabel(order.status)}`, 20, yPos);
+            yPos += 15;
+            
+            // ===== INFORMACIÓN DEL CLIENTE =====
+            // Caja para información del cliente
+            doc.setFillColor(...secondaryColor);
+            doc.rect(20, yPos - 5, 170, 35, 'F');
+            doc.setDrawColor(...primaryColor);
+            doc.rect(20, yPos - 5, 170, 35, 'S');
+            
+            const customerInfo = order.customerInfo || order.customer_info || {};
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('INFORMACIÓN DEL CLIENTE', 25, yPos + 5);
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            yPos += 12;
+            
+            doc.text(`Cliente: ${customerInfo.name || 'No especificado'}`, 25, yPos);
+            doc.text(`Teléfono: ${customerInfo.phone || 'No especificado'}`, 120, yPos);
+            yPos += 6;
+            
+            if (customerInfo.email) {
+                doc.text(`Email: ${customerInfo.email}`, 25, yPos);
+                yPos += 6;
+            }
+            
+            doc.text(`Dirección: ${customerInfo.address || 'No especificada'}`, 25, yPos);
+            yPos += 6;
+            doc.text(`Ciudad: ${customerInfo.city || 'Colombia'}`, 25, yPos);
+            
+            yPos += 20;
+            
+            // ===== TABLA DE PRODUCTOS =====
+            // Encabezado de la tabla
+            doc.setFillColor(...primaryColor);
+            doc.rect(20, yPos, 170, 10, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PRODUCTO', 25, yPos + 7);
+            doc.text('CANT.', 125, yPos + 7, { align: 'center' });
+            doc.text('PRECIO UNIT.', 165, yPos + 7, { align: 'right' });
+            doc.text('TOTAL', 185, yPos + 7, { align: 'right' });
+            
+            yPos += 12;
+            
+            // Productos
+            doc.setTextColor(...textDarkColor);
+            doc.setFont('helvetica', 'normal');
+            let total = 0;
+            let rowIndex = 0;
+            
+            order.items.forEach(item => {
+                const itemTotal = item.quantity * item.price;
+                total += itemTotal;
+                
+                // Fondo alternado para las filas
+                if (rowIndex % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(20, yPos - 3, 170, 8, 'F');
+                }
+                
+                // Texto del producto
+                const productName = item.name || 
+                                   item.productName || 
+                                   item.title || 
+                                   item.product_name || 
+                                   item.productTitle || 
+                                   item.itemName ||
+                                   item.description ||
+                                   'Producto sin nombre';
+                const productText = `${productName}${item.variant ? ` - ${item.variant}` : ''}`;
+                const maxProductWidth = 90;
+                const wrappedProduct = doc.splitTextToSize(productText, maxProductWidth);
+                
+                doc.text(wrappedProduct, 25, yPos + 2);
+                doc.text(item.quantity.toString(), 125, yPos + 2, { align: 'center' });
+                doc.text(`$${item.price.toLocaleString()}`, 165, yPos + 2, { align: 'right' });
+                doc.text(`$${itemTotal.toLocaleString()}`, 185, yPos + 2, { align: 'right' });
+                
+                const lineHeight = Math.max(6, wrappedProduct.length * 4);
+                yPos += lineHeight;
+                rowIndex++;
+                
+                // Verificar si necesitamos nueva página
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 30;
+                }
+            });
+            
+            // Línea separadora antes del total
+            doc.setDrawColor(...primaryColor);
+            doc.setLineWidth(1);
+            doc.line(20, yPos + 2, 190, yPos + 2);
+            yPos += 8;
+            
+            // ===== TOTAL =====
+            doc.setFillColor(...primaryColor);
+            doc.rect(120, yPos, 70, 12, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('TOTAL:', 125, yPos + 8);
+            doc.text(`$${total.toLocaleString()}`, 185, yPos + 8, { align: 'right' });
+            
+            yPos += 20;
+            
+            // ===== INFORMACIÓN ADICIONAL =====
+            doc.setTextColor(...textDarkColor);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            
+            if (order.paymentMethod) {
+                doc.text(`Método de pago: ${order.paymentMethod}`, 20, yPos);
+                yPos += 6;
+            }
+            
+            if (order.notes) {
+                yPos += 5;
+                doc.setFont('helvetica', 'bold');
+                doc.text('Notas:', 20, yPos);
+                yPos += 5;
+                doc.setFont('helvetica', 'normal');
+                const notesText = doc.splitTextToSize(order.notes, 170);
+                doc.text(notesText, 20, yPos);
+                yPos += notesText.length * 4;
+            }
+            
+            // ===== PIE DE PÁGINA =====
+            yPos = 280;
+            
+            // Línea decorativa
+            doc.setDrawColor(...primaryColor);
+            doc.setLineWidth(0.5);
+            doc.line(20, yPos - 10, 190, yPos - 10);
+            
+            // Agradecimiento y contacto
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.text('¡Gracias por elegir Luni Hair Clips!', 105, yPos, { align: 'center' });
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Síguenos en Instagram: @lunihairclips', 105, yPos + 5, { align: 'center' });
+            
+            return doc;
+            
+        } catch (error) {
+            console.error('❌ Error generando PDF de factura:', error);
+            throw error;
+        }
     }
-    if (order.shipping > 0) {
-      text += `Envío: $${order.shipping.toLocaleString('es-CO')}\n`;
+
+    // Obtener etiqueta del estado
+    getStatusLabel(status) {
+        const statusLabels = {
+            'pendiente': 'Pendiente',
+            'confirmado': 'Confirmado',
+            'en_preparacion': 'En Preparación',
+            'enviado': 'Enviado',
+            'entregado': 'Entregado',
+            'cancelado': 'Cancelado'
+        };
+        return statusLabels[status] || status;
     }
-    text += `\n💎 *TOTAL: $${order.total.toLocaleString('es-CO')}*\n\n`;
-    text += `✨ Gracias por tu compra ✨\n`;
-    text += `Luni Hair Clips - Accesorios únicos para tu cabello\n`;
-    text += `WhatsApp: 304 495 2240\n`;
-    text += `Instagram: @luni_hairclips`;
 
-    return text;
-  }
+    // Descargar PDF de factura
+    async downloadPDFInvoice(order) {
+        try {
+            console.log('📥 Iniciando descarga de PDF de factura...');
+            console.log('📋 Datos de orden recibidos:', order);
+            
+            const doc = await this.generatePDFInvoice(order);
+            if (!doc) {
+                throw new Error('No se pudo generar el documento PDF');
+            }
+            
+            const orderNumber = order.orderNumber || order.order_number || order.id || 'SIN-NUMERO';
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+            const filename = `Factura-Luni-${orderNumber}-${timestamp}.pdf`;
+            
+            console.log('💾 Guardando archivo:', filename);
+            
+            // Intentar guardar el archivo
+            try {
+                doc.save(filename);
+                console.log('✅ PDF de factura guardado exitosamente:', filename);
+                
+                // Verificación adicional - intentar mostrar una alerta después de un momento
+                setTimeout(() => {
+                    console.log('🔍 Verificando descarga...');
+                    console.log('📁 El archivo debería aparecer en la carpeta de Descargas como:', filename);
+                }, 500);
+                
+                return filename;
+            } catch (saveError) {
+                console.error('❌ Error específico al guardar:', saveError);
+                throw new Error(`Error al guardar PDF: ${saveError.message}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error descargando PDF de factura:', error);
+            console.error('🔍 Stack trace:', error.stack);
+            throw error;
+        }
+    }
 
-  getStatusLabel(status) {
-    const labels = {
-      'pendiente': '⏳ Pendiente',
-      'confirmado': '✅ Confirmado',
-      'en_preparacion': '📦 En Preparación',
-      'enviado': '🚚 Enviado',
-      'entregado': '🎉 Entregado',
-      'cancelado': '❌ Cancelado'
-    };
-    return labels[status] || status;
-  }
+    // Enviar factura por WhatsApp
+    async sendInvoiceByWhatsApp(order) {
+        try {
+            console.log('📱 Preparando envío por WhatsApp...');
+            
+            const customerInfo = order.customerInfo || order.customer_info;
+            const orderNumber = order.orderNumber || order.order_number;
+            
+            // Calcular total
+            let total = 0;
+            order.items.forEach(item => {
+                total += item.quantity * item.price;
+            });
+            
+            // Generar mensaje
+            let message = `*Luni Hair Clips*%0A%0A`;
+            message += `📋 *Factura N°:* ${orderNumber}%0A`;
+            message += `📅 *Fecha:* ${new Date(order.createdAt || order.created_at).toLocaleDateString('es-CO')}%0A`;
+            message += `👤 *Cliente:* ${customerInfo.name}%0A%0A`;
+            
+            message += `🛍️ *Productos pedidos:*%0A`;
+            order.items.forEach(item => {
+                const itemTotal = item.quantity * item.price;
+                const productName = item.name || 
+                                   item.productName || 
+                                   item.title || 
+                                   item.product_name || 
+                                   item.productTitle || 
+                                   item.itemName ||
+                                   item.description ||
+                                   'Producto sin nombre';
+                message += `• ${productName}${item.variant ? ` - ${item.variant}` : ''}%0A`;
+                message += `  Cantidad: ${item.quantity} - Precio: $${item.price.toLocaleString()} = $${itemTotal.toLocaleString()}%0A`;
+            });
+            
+            message += `%0A💰 *TOTAL: $${total.toLocaleString()}*%0A%0A`;
+            message += `📍 *Dirección de entrega:* ${customerInfo.address}, ${customerInfo.city}%0A%0A`;
+            message += `¡Gracias por tu compra! 💕`;
+            
+            // Crear URL de WhatsApp
+            const whatsappNumber = customerInfo.phone.replace(/\D/g, '');
+            const whatsappURL = `https://wa.me/${whatsappNumber}?text=${message}`;
+            
+            // Abrir WhatsApp
+            window.open(whatsappURL, '_blank');
+            
+            console.log('✅ WhatsApp abierto con mensaje de factura');
+            return whatsappURL;
+            
+        } catch (error) {
+            console.error('❌ Error enviando por WhatsApp:', error);
+            throw error;
+        }
+    }
 
-  async sendInvoiceByWhatsApp(order) {
-    const invoiceText = this.generateInvoiceText(order);
-    const phoneNumber = order.customerInfo.phone;
-    const encodedMessage = encodeURIComponent(invoiceText);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    return whatsappUrl;
-  }
-
-  async sendInvoiceByEmail(order) {
-    // En producción, esto se haría desde el backend
-    // Por ahora, generamos el HTML que se puede enviar
-    const invoiceHTML = this.generateInvoiceHTML(order);
-    return invoiceHTML;
-  }
+    // Enviar PDF por WhatsApp (descargar primero)
+    async sendPDFByWhatsApp(order) {
+        try {
+            // Primero descargar el PDF
+            await this.downloadPDFInvoice(order);
+            
+            // Luego enviar mensaje explicativo por WhatsApp
+            const customerInfo = order.customerInfo || order.customer_info;
+            let message = `*Luni Hair Clips*%0A%0A`;
+            message += `Hola ${customerInfo.name}! 😊%0A%0A`;
+            message += `Tu factura PDF ha sido generada exitosamente 📄%0A`;
+            message += `La descarga comenzará automáticamente.%0A%0A`;
+            message += `Si tienes alguna pregunta sobre tu pedido, ¡no dudes en contactarnos! 💕`;
+            
+            const whatsappNumber = customerInfo.phone.replace(/\D/g, '');
+            const whatsappURL = `https://wa.me/${whatsappNumber}?text=${message}`;
+            
+            // Abrir WhatsApp después de un momento para que se descargue el PDF
+            setTimeout(() => {
+                window.open(whatsappURL, '_blank');
+            }, 1000);
+            
+            return whatsappURL;
+            
+        } catch (error) {
+            console.error('❌ Error enviando PDF por WhatsApp:', error);
+            throw error;
+        }
+    }
 }
 
-// Instancia global
-const invoiceGenerator = new InvoiceGenerator();
+// Inicialización global con manejo de errores robusto
+function initializeInvoiceGeneratorSafely() {
+    try {
+        if (typeof window.invoiceGenerator === 'undefined') {
+            window.invoiceGenerator = new InvoiceGenerator();
+            console.log('✅ InvoiceGenerator inicializado globalmente');
+        }
+        return window.invoiceGenerator;
+    } catch (error) {
+        console.error('❌ Error inicializando InvoiceGenerator:', error);
+        return null;
+    }
+}
+
+// Función de inicialización que se puede llamar múltiples veces
+window.initializeInvoiceGenerator = function() {
+    return initializeInvoiceGeneratorSafely();
+};
+
+// Inicialización automática cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeInvoiceGeneratorSafely);
+} else {
+    // DOM ya está listo
+    initializeInvoiceGeneratorSafely();
+}
+
+// También inicializar cuando la ventana esté completamente cargada
+window.addEventListener('load', initializeInvoiceGeneratorSafely);
+
+console.log('📋 Sistema de facturación cargado - invoice.js');
 

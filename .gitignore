@@ -1,0 +1,25 @@
+# Variables de entorno (no subir a git)
+.env.local
+.env.*.local
+.env
+
+# Vercel
+.vercel
+
+# Node modules (si usas npm)
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

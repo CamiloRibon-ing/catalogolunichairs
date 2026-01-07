@@ -2,41 +2,91 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#e06c9f">
   <title>Catálogo de Accesorios</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="recursos/lunilogo.png">
   <!-- Librería AOS para animaciones de scroll -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-   <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<title>Luni | Hair accessories🎀🌙🌸</title>
+  <title>Luni | Hair accessories🎀🌙🌸</title>
+  <style>
+    /* Prevenir FOUC */
+    .hero, #catalogo { opacity: 0; }
+    .loaded .hero, .loaded #catalogo { opacity: 1; transition: opacity 0.3s; }
+  </style>
 </head>
 
 <body>
-    <!-- HEADER CON LOGIN -->
+    <!-- Indicador de estado de carga -->
+    <div id="loading-status" class="loading-status" style="
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        background: #007bff; 
+        color: white; 
+        padding: 5px 15px; 
+        text-align: center; 
+        font-size: 12px; 
+        z-index: 9999;
+        display: block;
+    ">
+        🔄 Inicializando sistema de facturación...
+    </div>
+
+    <!-- HEADER PROFESIONAL -->
     <header class="main-header">
         <div class="header-content">
             <div class="logo-section">
                 <img src="recursos/lunilogo.png" alt="Luni Logo" class="header-logo">
-                <span class="brand-name">Luni Hair Clips</span>
+                <div class="brand-info">
+                    <span class="brand-name">Luni Hair Clips</span>
+                    <span class="brand-tagline">Accesorios Premium</span>
+                </div>
             </div>
-            <nav class="header-nav">
-                <a href="#catalogo" class="nav-link">Catálogo</a>
-                <div id="auth-section" class="auth-section">
-                    <button id="header-login-btn" class="btn-login-header" style="display: none;">
-                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                    </button>
-                    <div id="user-menu" class="user-menu" style="display: none;">
-                        <span class="user-name">
-                            <i class="fas fa-user-circle"></i> <span id="current-username">Admin</span>
-                        </span>
+            
+            <!-- Botón de login en la esquina superior derecha -->
+            <div class="header-actions">
+                <button id="header-login-btn" class="btn-login-header">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span class="btn-text">Iniciar Sesión</span>
+                </button>
+                
+                <div id="user-menu" class="user-menu" style="display: none;">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name" id="current-username">Admin</span>
+                            <span class="user-role">Administrador</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <!-- El botón admin se añadirá aquí dinámicamente -->
                         <button id="header-logout-btn" class="btn-logout-header">
-                            <i class="fas fa-sign-out-alt"></i> Salir
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="btn-text">Salir</span>
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <nav class="header-nav">
+                <a href="#hero" class="nav-link">Inicio</a>
+                <a href="#catalogo" class="nav-link">Catálogo</a>
+                <a href="#about" class="nav-link">Nosotros</a>
             </nav>
+            
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
     </header>
 
@@ -49,24 +99,17 @@
     </div>
 
     <!-- SECCIÓN DE INICIO -->
-    <section class="hero">
-        <h1 data-aos="fade-up">✨BIENVENIDO A LUNI HAIR CLIPS ✨</h1>
+    <section class="hero" id="hero">
+        <h1 data-aos="fade-up">✨ BIENVENIDO A LUNI HAIR CLIPS ✨</h1>
         <p data-aos="fade-up" data-aos-delay="200">
-            En luni creemos que cada cabello es unico y
-            especial, lleno de historia y belleza. cada pinza de
-            luni esta pensada en ti y diseñada justamente
-            para resaltar esa belleza.
-
-            algunas de nuestras pinzas estan hechas a base
-            de acetato y resina, lo que permite que no te
-            maltrate ni te parta el cabello mientras esta muy
-            bien sujetado.
-
-            mas que simples pinzas , nuestros hair clips
-            brindan comodidad , estilo, autenticidad
-
-            y seguridad, ideales para acompañarte en
-            cualquier momento. ✨
+            En Luni creemos que cada cabello es único y especial, lleno de historia y belleza. 
+            Cada pinza de Luni está pensada en ti y diseñada especialmente para resaltar esa belleza.
+            <br><br>
+            Nuestras pinzas están elaboradas con acetato y resina de alta calidad, 
+            lo que garantiza que no maltraten ni partan tu cabello, manteniéndolo perfectamente sujetado.
+            <br><br>
+            Más que simples pinzas, nuestros hair clips brindan <strong>comodidad, estilo, 
+            autenticidad y seguridad</strong>, ideales para acompañarte en cualquier momento. ✨
         </p>
         <a href="#catalogo" class="btn" data-aos="fade-up" data-aos-delay="400">Ver Catálogo</a>
     </section>
@@ -286,6 +329,8 @@
                 </button>
             </div>
 
+            <div class="admin-content">
+
             <!-- TAB DASHBOARD/ESTADÍSTICAS -->
             <div id="admin-dashboard-tab" class="admin-tab-content active">
                 <h3><i class="fas fa-chart-line"></i> Dashboard de Estadísticas</h3>
@@ -358,7 +403,7 @@
             </div>
 
             <!-- TAB VENTAS/PEDIDOS -->
-            <div id="admin-orders-tab" class="admin-tab-content active">
+            <div id="admin-orders-tab" class="admin-tab-content">
                 <div class="tab-header">
                     <h3><i class="fas fa-shopping-bag"></i> Gestión de Ventas</h3>
                     <div class="orders-stats">
@@ -373,13 +418,32 @@
                     </div>
                 </div>
                 <div class="orders-filters">
+                    <!-- Botones de debug ocultos en producción -->
+                    <!--
+                    <button onclick="adminForceLocalStorage()" class="btn btn-debug" style="background: #ff6b6b; margin-right: 10px;">
+                        <i class="fas fa-database"></i> DEBUG: Cargar LocalStorage
+                    </button>
+                    <button onclick="adminDebugDOM()" class="btn btn-info" style="background: #17a2b8; margin-right: 10px;">
+                        <i class="fas fa-search"></i> DEBUG: Ver DOM
+                    </button>
+                    <button onclick="debugVisibility()" class="btn btn-warning" style="background: #ffc107; margin-right: 10px;">
+                        <i class="fas fa-eye"></i> FORZAR VISIBILIDAD
+                    </button>
+                    <button onclick="debugInitialization()" class="btn btn-secondary" style="background: #6c757d; margin-right: 10px;">
+                        <i class="fas fa-cogs"></i> DEBUG INIT
+                    </button>
+                    <button onclick="forceReinitialize()" class="btn btn-warning" style="background: #ffc107; color: #000; margin-right: 10px;">
+                        <i class="fas fa-refresh"></i> REINICIALIZAR
+                    </button>
+                    -->
                     <button class="filter-status active" data-status="all" onclick="filterOrders('all')">Todos</button>
-                    <button class="filter-status" data-status="pendiente" onclick="filterOrders('pendiente')">Pendientes</button>
-                    <button class="filter-status" data-status="confirmado" onclick="filterOrders('confirmado')">Confirmados</button>
-                    <button class="filter-status" data-status="en_preparacion" onclick="filterOrders('en_preparacion')">En Preparación</button>
-                    <button class="filter-status" data-status="enviado" onclick="filterOrders('enviado')">Enviados</button>
-                    <button class="filter-status" data-status="entregado" onclick="filterOrders('entregado')">Entregados</button>
-                    <button class="filter-status" data-status="cancelado" onclick="filterOrders('cancelado')">Cancelados</button>
+                    <button class="filter-status" data-status="pending" onclick="filterOrders('pending')">Pendientes</button>
+                    <button class="filter-status" data-status="confirmed" onclick="filterOrders('confirmed')">Confirmados</button>
+                    <button class="filter-status" data-status="preparing" onclick="filterOrders('preparing')">En Preparación</button>
+                    <button class="filter-status" data-status="shipped" onclick="filterOrders('shipped')">Enviados</button>
+                    <button class="filter-status" data-status="delivered" onclick="filterOrders('delivered')">Entregados</button>
+                    <button class="filter-status" data-status="cancelled" onclick="filterOrders('cancelled')">Cancelados</button>
+                    <button class="filter-status" data-status="completed" onclick="filterOrders('completed')">Completados</button>
                 </div>
                 <div id="admin-orders-list" class="admin-orders-list"></div>
             </div>
@@ -433,7 +497,7 @@
             </div>
 
             <!-- TAB AGREGAR PRODUCTO -->
-            <div id="admin-add-tab" class="admin-tab-content">
+            <div id="admin-add-product-tab" class="admin-tab-content">
                 <h3 id="form-title"><i class="fas fa-plus-circle"></i> Agregar Nuevo Producto</h3>
                 <form id="product-form" class="product-form" style="display: none;">
                     <input type="hidden" id="product-id">
@@ -524,13 +588,11 @@
                         <button type="button" id="save-product-btn" class="btn btn-primary">
                             <i class="fas fa-save"></i> Guardar Producto
                         </button>
-                        <button type="button" onclick="document.getElementById('product-form').style.display='none'" class="btn btn-secondary">Cancelar</button>
+                        <button type="button" onclick="adminPanel.cancelProductForm()" class="btn btn-secondary">Cancelar</button>
                     </div>
                 </form>
-                <button id="admin-add-product" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Agregar Nuevo Producto
-                </button>
             </div>
+            </div> <!-- admin-content -->
         </div>
     </div>
 
@@ -541,75 +603,296 @@
     </div>
 
     <!-- SCRIPTS -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/categories.js"></script>
-    <script src="js/products.js"></script>
-    <script src="js/cloudinary.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/orders.js"></script>
-    <script src="js/invoice.js"></script>
-    <script src="js/checkout.js"></script>
-    <script src="js/statistics.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/main.js"></script>
+   
     <script>
-        // Función para cambiar tabs en admin
-        function showAdminTab(tab) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+        // ===== INICIALIZACION INMEDIATA =====
+        
+        // Función global para filtrar órdenes (disponible inmediatamente)
+        window.filterOrders = async function(status) {
+            console.log('🔍 Filtrando órdenes por estado:', status);
             
-            if (tab === 'dashboard') {
-                document.querySelector('.admin-tab[data-tab="dashboard"]')?.classList.add('active');
-                document.getElementById('admin-dashboard-tab')?.classList.add('active');
-                adminPanel.loadDashboard();
-            } else if (tab === 'orders') {
-                document.querySelector('.admin-tab[data-tab="orders"]')?.classList.add('active');
-                document.getElementById('admin-orders-tab')?.classList.add('active');
-                adminPanel.loadOrdersList();
-                adminPanel.updateOrdersStats();
-            } else if (tab === 'categories') {
-                document.querySelector('.admin-tab[data-tab="categories"]')?.classList.add('active');
-                document.getElementById('admin-categories-tab')?.classList.add('active');
-                adminPanel.loadCategoriesList();
-            } else if (tab === 'products') {
-                document.querySelector('.admin-tab[data-tab="products"]')?.classList.add('active');
-                document.getElementById('admin-products-tab')?.classList.add('active');
-                adminPanel.loadProductsList();
-            } else if (tab === 'add-product') {
-                document.querySelector('.admin-tab[data-tab="add-product"]')?.classList.add('active');
-                document.getElementById('admin-add-tab')?.classList.add('active');
+            try {
+                // Actualizar botones de filtro
+                document.querySelectorAll('.filter-status').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                const activeBtn = document.querySelector(`.filter-status[data-status="${status}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                    console.log('✅ Botón de filtro activado:', status);
+                }
+                
+                // Cargar órdenes filtradas
+                if (typeof adminPanel !== 'undefined' && adminPanel.loadOrdersList) {
+                    await adminPanel.loadOrdersList(status);
+                    adminPanel.updateOrdersStats();
+                    console.log('✅ Órdenes filtradas cargadas para estado:', status);
+                } else {
+                    console.warn('⚠️ adminPanel no disponible aún, reintentando...');
+                    // Reintentar después de un momento
+                    setTimeout(() => {
+                        if (typeof adminPanel !== 'undefined') {
+                            adminPanel.loadOrdersList(status);
+                            adminPanel.updateOrdersStats();
+                        }
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('❌ Error filtrando órdenes:', error);
+                alert('Error filtrando órdenes: ' + error.message);
             }
-        }
-
-        // Función para filtrar pedidos
-        function filterOrders(status) {
-            document.querySelectorAll('.filter-status').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.filter-status[data-status="${status}"]`)?.classList.add('active');
-            adminPanel.loadOrdersList(status);
-        }
-
-        // Función para cambiar período de gráfica
-        let currentPeriod = 'day';
-        function changePeriodChart(period) {
-            currentPeriod = period;
-            document.querySelectorAll('.period-tab').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+        };
+        
+        // Función de debug para verificar estado de inicialización
+        window.debugInitialization = function() {
+            const status = {
+                invoiceGenerator: typeof window.invoiceGenerator !== 'undefined' && window.invoiceGenerator,
+                initFunction: typeof window.initializeInvoiceGenerator !== 'undefined',
+                adminPanel: typeof adminPanel !== 'undefined' && adminPanel,
+                orderManager: typeof orderManager !== 'undefined' && orderManager,
+                jsPDF: typeof window.jspdf !== 'undefined',
+                supabaseClient: typeof supabaseClient !== 'undefined',
+                invoiceGeneratorReady: window.invoiceGenerator?.isReady || false
+            };
             
-            // Destruir gráfica anterior
-            if (statisticsManager.charts['sales-day-chart']) {
-                statisticsManager.charts['sales-day-chart'].destroy();
+            console.log('🔍 Estado de inicialización completo:', status);
+            
+            let message = '🔍 DEBUG INICIALIZACIÓN:\n\n';
+            message += `📋 invoiceGenerator: ${status.invoiceGenerator ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
+            message += `⚙️ initFunction: ${status.initFunction ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
+            message += `🎯 isReady: ${status.invoiceGeneratorReady ? '✅ OK' : '❌ NO LISTO'}\n`;
+            message += `👨‍💼 adminPanel: ${status.adminPanel ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
+            message += `📦 orderManager: ${status.orderManager ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
+            message += `📄 jsPDF: ${status.jsPDF ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
+            message += `🔗 supabaseClient: ${status.supabaseClient ? '✅ OK' : '❌ NO DISPONIBLE'}\n\n`;
+            
+            if (!status.invoiceGenerator && status.initFunction) {
+                message += `🔄 SOLUCIÓN: Ejecutando inicialización manual...\n`;
+                try {
+                    window.initializeInvoiceGenerator();
+                    message += `✅ Inicialización ejecutada!\n`;
+                } catch (error) {
+                    message += `❌ Error en inicialización: ${error.message}\n`;
+                }
             }
             
-            // Crear nueva gráfica
-            statisticsManager.renderSalesByPeriodChart('sales-day-chart', period);
-        }
-
-        // Script para Vercel Analytics
-        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+            alert(message);
+            return status;
+        };
+        
+        console.log('✅ Función filterOrders inicializada globalmente');
     </script>
-    <script defer src="/_vercel/insights/script.js"></script>
+    
+    <!-- ================= INICIALIZACIÓN PRINCIPAL ================= -->
+    <script>
+        console.log('📱 Iniciando sistema de inicialización...');
+        
+        // Variables globales para tracking de inicialización
+        let initializationStatus = {
+            jsPDF: false,
+            supabase: false,
+            orderManager: false,
+            adminPanel: false,
+            invoiceGenerator: false,
+            complete: false
+        };
+        
+        // Función para mostrar estado de carga
+        function updateLoadingStatus() {
+            const totalSteps = Object.keys(initializationStatus).length - 1; // -1 por 'complete'
+            const completedSteps = Object.values(initializationStatus).filter(Boolean).length;
+            const percentage = Math.round((completedSteps / totalSteps) * 100);
+            
+            console.log(`🔄 Progreso de carga: ${percentage}%`, initializationStatus);
+            
+            // Actualizar indicador visual
+            const loadingElement = document.getElementById('loading-status');
+            if (loadingElement) {
+                if (percentage < 100) {
+                    loadingElement.textContent = `🔄 Inicializando sistema... ${percentage}%`;
+                    loadingElement.style.display = 'block';
+                } else {
+                    loadingElement.textContent = '✅ Sistema listo!';
+                    setTimeout(() => {
+                        loadingElement.style.display = 'none';
+                    }, 2000);
+                }
+            }
+        }
+        
+        // Función para marcar componente como cargado
+        function markAsLoaded(component) {
+            initializationStatus[component] = true;
+            updateLoadingStatus();
+            console.log(`✅ ${component} cargado correctamente`);
+            checkAllLoaded();
+        }
+        
+        // Verificar cuando todo esté listo
+        function checkAllLoaded() {
+            const allLoaded = Object.entries(initializationStatus)
+                .filter(([key]) => key !== 'complete')
+                .every(([, value]) => value);
+                
+            if (allLoaded && !initializationStatus.complete) {
+                initializationStatus.complete = true;
+                console.log('🎉 ¡Todos los componentes cargados exitosamente!');
+                
+                // Disparar evento personalizado para notificar que todo está listo
+                window.dispatchEvent(new CustomEvent('appFullyLoaded'));
+            }
+        }
+        
+        // Listener para cuando todo esté completamente cargado
+        window.addEventListener('appFullyLoaded', function() {
+            console.log('🚀 Aplicación completamente inicializada y lista para usar');
+            
+            // Mostrar mensaje final y ocultar indicador
+            const loadingElement = document.getElementById('loading-status');
+            if (loadingElement) {
+                loadingElement.textContent = '✅ Sistema de facturación listo!';
+                loadingElement.style.background = '#28a745';
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                }, 3000);
+            }
+        });
+
+        // DOMContentLoaded principal
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏁 DOM cargado, iniciando componentes...');
+            
+            // Función para verificar e inicializar componentes
+            function initializeComponents() {
+                // Verificar jsPDF
+                if (typeof window.jspdf !== 'undefined') {
+                    if (!initializationStatus.jsPDF) {
+                        markAsLoaded('jsPDF');
+                    }
+                } else {
+                    console.warn('⚠️ jsPDF no disponible aún...');
+                }
+                
+                // Verificar Supabase
+                if (typeof supabaseClient !== 'undefined') {
+                    if (!initializationStatus.supabase) {
+                        markAsLoaded('supabase');
+                    }
+                }
+                
+                // Inicializar OrderManager
+                if (typeof OrderManager !== 'undefined' && !initializationStatus.orderManager) {
+                    try {
+                        if (!window.orderManager) {
+                            window.orderManager = new OrderManager();
+                        }
+                        markAsLoaded('orderManager');
+                        console.log('📦 OrderManager inicializado');
+                    } catch (error) {
+                        console.error('❌ Error inicializando OrderManager:', error);
+                    }
+                }
+                
+                // Inicializar AdminPanel
+                if (typeof AdminPanel !== 'undefined' && !initializationStatus.adminPanel) {
+                    try {
+                        if (!window.adminPanel) {
+                            window.adminPanel = new AdminPanel();
+                        }
+                        markAsLoaded('adminPanel');
+                        console.log('👨‍💼 AdminPanel inicializado');
+                    } catch (error) {
+                        console.error('❌ Error inicializando AdminPanel:', error);
+                    }
+                }
+                
+                // Inicializar InvoiceGenerator
+                if (typeof window.initializeInvoiceGenerator === 'function' && !initializationStatus.invoiceGenerator) {
+                    try {
+                        window.initializeInvoiceGenerator();
+                        markAsLoaded('invoiceGenerator');
+                    } catch (error) {
+                        console.error('❌ Error inicializando InvoiceGenerator:', error);
+                    }
+                }
+            }
+            
+            // Inicializar inmediatamente
+            initializeComponents();
+            
+            // Verificar periódicamente durante los primeros segundos
+            let checkCount = 0;
+            const checkInterval = setInterval(() => {
+                initializeComponents();
+                checkCount++;
+                
+                if (checkCount >= 10 || initializationStatus.complete) {
+                    clearInterval(checkInterval);
+                    console.log('🔚 Finalizado proceso de inicialización');
+                }
+            }, 500);
+        });
+        
+        // Función auxiliar para forzar reinicialización si es necesario
+        window.forceReinitialize = function() {
+            console.log('🔄 Forzando reinicialización...');
+            
+            // Reiniciar status
+            Object.keys(initializationStatus).forEach(key => {
+                if (key !== 'complete') {
+                    initializationStatus[key] = false;
+                }
+            });
+            initializationStatus.complete = false;
+            
+            // Reinicializar InvoiceGenerator específicamente
+            if (typeof window.initializeInvoiceGenerator === 'function') {
+                try {
+                    window.initializeInvoiceGenerator();
+                    console.log('✅ InvoiceGenerator reinicializado');
+                } catch (error) {
+                    console.error('❌ Error reinicializando InvoiceGenerator:', error);
+                }
+            }
+            
+            return window.debugInitialization();
+        };
+        
+        console.log('🎯 Sistema de inicialización configurado');
+    </script>
+
+    <!-- ================= SUPABASE (OBLIGATORIO) ================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/env-config.js"></script>
+<script src="js/supabaseClient.js"></script>
+
+<!-- ================= LIBRERÍAS ================= -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ================= SISTEMA ================= -->
+<script src="js/auth.js"></script>
+<script src="js/categories.js"></script>
+<script src="js/products.js"></script>
+<script src="js/cloudinary.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/orders.js"></script>
+<script src="js/invoice.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/statistics.js"></script>
+<script src="js/test-orders-admin.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/main.js"></script>
+
+<!-- ================= VERCEL ================= -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<!-- Script de Vercel comentado para desarrollo local -->
+<!-- <script defer src="/_vercel/insights/script.js"></script> -->
+
 </body>
 
 </html>

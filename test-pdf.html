@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PDF Invoice - Luni Hair Clips</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #e06c9f;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-size: 1rem;
+        }
+        .btn:hover {
+            background: #d15a8a;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background: #fff5f5;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background: #f0fff4;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de Factura PDF - Luni Hair Clips</h1>
+        
+        <p>Esta página permite probar la generación y descarga de facturas en PDF.</p>
+        
+        <div style="margin: 2rem 0;">
+            <button class="btn" onclick="testPDFGeneration()">
+                📄 Generar Factura PDF de Prueba
+            </button>
+            
+            <button class="btn btn-success" onclick="downloadTestPDF()">
+                💾 Descargar PDF de Prueba
+            </button>
+            
+            <button class="btn" onclick="testWhatsAppSend()">
+                📱 Probar Envío por WhatsApp
+            </button>
+        </div>
+
+        <div id="result" class="result" style="display: none;">
+            <h3>Resultado:</h3>
+            <p id="resultText"></p>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: #e9ecef; border-radius: 5px;">
+            <h3>ℹ️ Información:</h3>
+            <ul>
+                <li><strong>jsPDF Status:</strong> <span id="jspdfStatus">Verificando...</span></li>
+                <li><strong>InvoiceGenerator:</strong> <span id="invoiceStatus">Verificando...</span></li>
+                <li><strong>Orden de prueba:</strong> Se genera automáticamente para testing</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/invoice.js"></script>
+
+    <script>
+        // Orden de prueba
+        const testOrder = {
+            id: 'test-001',
+            orderNumber: 'TEST-001',
+            createdAt: Date.now(),
+            status: 'confirmado',
+            customerInfo: {
+                name: 'María González',
+                phone: '3001234567',
+                email: 'maria@example.com',
+                address: 'Calle 123 #45-67',
+                city: 'Bogotá'
+            },
+            items: [
+                {
+                    productId: 'prod-1',
+                    productName: 'Ganchito Rosa Brillante',
+                    quantity: 2,
+                    price: 15000,
+                    subtotal: 30000,
+                    color: 'Rosa',
+                    size: 'Mediano'
+                },
+                {
+                    productId: 'prod-2',
+                    productName: 'Diadema Flores Doradas',
+                    quantity: 1,
+                    price: 25000,
+                    subtotal: 25000,
+                    color: 'Dorado'
+                }
+            ],
+            subtotal: 55000,
+            discount: 0,
+            shipping: 0,
+            total: 55000
+        };
+
+        // Verificar estado de las librerías
+        function checkStatus() {
+            // Verificar jsPDF
+            const jspdfElement = document.getElementById('jspdfStatus');
+            if (typeof window.jsPDF !== 'undefined') {
+                jspdfElement.textContent = '✅ Disponible';
+                jspdfElement.style.color = 'green';
+            } else {
+                jspdfElement.textContent = '❌ No disponible';
+                jspdfElement.style.color = 'red';
+            }
+
+            // Verificar InvoiceGenerator
+            const invoiceElement = document.getElementById('invoiceStatus');
+            if (typeof invoiceGenerator !== 'undefined') {
+                invoiceElement.textContent = '✅ Disponible';
+                invoiceElement.style.color = 'green';
+            } else {
+                invoiceElement.textContent = '❌ No disponible';
+                invoiceElement.style.color = 'red';
+            }
+        }
+
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            
+            resultDiv.style.display = 'block';
+            resultText.textContent = message;
+            
+            if (isError) {
+                resultDiv.className = 'result error';
+            } else {
+                resultDiv.className = 'result success';
+            }
+        }
+
+        async function testPDFGeneration() {
+            try {
+                showResult('Generando PDF...');
+                
+                if (typeof invoiceGenerator === 'undefined') {
+                    throw new Error('InvoiceGenerator no está disponible');
+                }
+
+                const doc = await invoiceGenerator.generatePDF(testOrder);
+                showResult('✅ PDF generado exitosamente. El documento está listo para descargar.');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('❌ Error generando PDF: ' + error.message, true);
+            }
+        }
+
+        async function downloadTestPDF() {
+            try {
+                showResult('Descargando PDF...');
+                
+                if (typeof invoiceGenerator === 'undefined') {
+                    throw new Error('InvoiceGenerator no está disponible');
+                }
+
+                const success = await invoiceGenerator.downloadPDF(testOrder);
+                if (success) {
+                    showResult('✅ PDF descargado exitosamente como: factura-TEST-001.pdf');
+                } else {
+                    showResult('❌ Error en la descarga del PDF', true);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('❌ Error descargando PDF: ' + error.message, true);
+            }
+        }
+
+        async function testWhatsAppSend() {
+            try {
+                showResult('Preparando envío por WhatsApp...');
+                
+                const whatsappUrl = await invoiceGenerator.sendPDFByWhatsApp(testOrder);
+                showResult('✅ URL de WhatsApp generada. Se abrirá en una nueva ventana.');
+                
+                // Simular apertura (en lugar de abrir realmente)
+                console.log('WhatsApp URL:', whatsappUrl);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('❌ Error preparando WhatsApp: ' + error.message, true);
+            }
+        }
+
+        // Verificar estado al cargar
+        setTimeout(checkStatus, 1000);
+        setInterval(checkStatus, 3000); // Verificar cada 3 segundos
+    </script>
+</body>
+</html>

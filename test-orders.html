@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Órdenes - Luni Chairs</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test de Sistema de Órdenes</h1>
+    <button onclick="crearOrdenesEjemplo()">Crear Órdenes de Ejemplo</button>
+    <button onclick="mostrarOrdenes()">Mostrar Órdenes</button>
+    <button onclick="limpiarOrdenes()">Limpiar Órdenes</button>
+    <div id="resultado"></div>
+
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/orders.js"></script>
+    
+    <script>
+        async function crearOrdenesEjemplo() {
+            const resultado = document.getElementById('resultado');
+            
+            // Crear productos de ejemplo
+            const productos = [
+                { id: 'prod1', name: 'Silla Ejecutiva Premium', price: 450000 },
+                { id: 'prod2', name: 'Silla Gaming Pro', price: 380000 },
+                { id: 'prod3', name: 'Silla Ergonómica Office', price: 320000 }
+            ];
+
+            // Crear órdenes de ejemplo
+            const ordenes = [
+                {
+                    customerInfo: {
+                        name: 'Juan Carlos Pérez',
+                        phone: '3001234567',
+                        email: 'juan@ejemplo.com',
+                        address: 'Calle 123 #45-67',
+                        city: 'Bogotá'
+                    },
+                    items: [
+                        {
+                            productId: productos[0].id,
+                            product: productos[0],
+                            quantity: 1,
+                            color: 'Negro',
+                            size: ''
+                        }
+                    ],
+                    total: 450000
+                },
+                {
+                    customerInfo: {
+                        name: 'María González',
+                        phone: '3009876543',
+                        email: 'maria@ejemplo.com',
+                        address: 'Carrera 89 #12-34',
+                        city: 'Medellín'
+                    },
+                    items: [
+                        {
+                            productId: productos[1].id,
+                            product: productos[1],
+                            quantity: 2,
+                            color: 'Azul',
+                            size: ''
+                        }
+                    ],
+                    total: 760000
+                },
+                {
+                    customerInfo: {
+                        name: 'Carlos Rodríguez',
+                        phone: '3005555555',
+                        email: 'carlos@ejemplo.com',
+                        address: 'Avenida 50 #78-90',
+                        city: 'Cali'
+                    },
+                    items: [
+                        {
+                            productId: productos[2].id,
+                            product: productos[2],
+                            quantity: 1,
+                            color: 'Gris',
+                            size: ''
+                        }
+                    ],
+                    total: 320000
+                }
+            ];
+
+            try {
+                // Crear las órdenes usando el OrderManager
+                for (let i = 0; i < ordenes.length; i++) {
+                    const ordenData = ordenes[i];
+                    const orden = await orderManager.createOrder(
+                        ordenData.customerInfo,
+                        ordenData.items,
+                        ordenData.total
+                    );
+                    
+                    // Simular diferentes estados
+                    if (i === 1) {
+                        await orderManager.updateOrderStatus(orden.id, 'confirmado');
+                    } else if (i === 2) {
+                        await orderManager.updateOrderStatus(orden.id, 'en_preparacion');
+                    }
+                    
+                    console.log(`Orden ${i + 1} creada:`, orden);
+                }
+
+                resultado.innerHTML = `
+                    <h3>✅ Órdenes de ejemplo creadas exitosamente</h3>
+                    <p>Se han creado 3 órdenes con diferentes estados:</p>
+                    <ul>
+                        <li>Orden 1: Pendiente</li>
+                        <li>Orden 2: Confirmada</li>
+                        <li>Orden 3: En Preparación</li>
+                    </ul>
+                `;
+            } catch (error) {
+                console.error('Error creando órdenes:', error);
+                resultado.innerHTML = `<h3>❌ Error creando órdenes: ${error.message}</h3>`;
+            }
+        }
+
+        async function mostrarOrdenes() {
+            await orderManager.refresh();
+            const ordenes = orderManager.getAllOrders();
+            const stats = orderManager.getOrdersStats();
+            const resultado = document.getElementById('resultado');
+            
+            resultado.innerHTML = `
+                <h3>📊 Estadísticas de Órdenes</h3>
+                <p>Total de órdenes: ${stats.total}</p>
+                <p>Ingresos totales: $${stats.totalRevenue.toLocaleString('es-CO')}</p>
+                
+                <h3>📋 Lista de Órdenes</h3>
+                ${ordenes.length === 0 ? '<p>No hay órdenes registradas</p>' : ''}
+                ${ordenes.map(orden => `
+                    <div style="border: 1px solid #ddd; margin: 10px 0; padding: 10px;">
+                        <h4>${orden.order_number || orden.orderNumber} - ${orden.customer_info?.name || orden.customerInfo?.name}</h4>
+                        <p>Estado: ${orden.status}</p>
+                        <p>Total: $${parseFloat(orden.total).toLocaleString('es-CO')}</p>
+                        <p>Fecha: ${new Date(orden.created_at || orden.createdAt).toLocaleDateString('es-CO')}</p>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        async function limpiarOrdenes() {
+            if (confirm('¿Estás seguro de que quieres eliminar todas las órdenes?')) {
+                // Limpiar localStorage
+                localStorage.removeItem('luni_orders');
+                
+                // Limpiar cache del orderManager
+                orderManager.orders = [];
+                
+                // Intentar limpiar Supabase (requiere permisos de admin)
+                try {
+                    const { error } = await supabaseClient
+                        .from('orders')
+                        .delete()
+                        .neq('id', '00000000-0000-0000-0000-000000000000'); // Eliminar todos excepto uno inexistente
+                    
+                    if (error) {
+                        console.warn('No se pudieron eliminar órdenes de Supabase:', error.message);
+                    }
+                } catch (error) {
+                    console.warn('No se pudieron eliminar órdenes de Supabase:', error.message);
+                }
+                
+                document.getElementById('resultado').innerHTML = '<h3>🗑️ Todas las órdenes han sido eliminadas</h3>';
+            }
+        }
+
+        // Mostrar órdenes al cargar
+        window.onload = async () => {
+            await mostrarOrdenes();
+        };
+    </script>
+</body>
+</html>

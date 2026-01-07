@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "pages/api/**/*.js": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "env": {
+    "VITE_SUPABASE_URL": "@supabase-url",
+    "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
+  },
+  "build": {
+    "env": {
+      "VITE_SUPABASE_URL": "@supabase-url", 
+      "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
+    }
+  }
+}

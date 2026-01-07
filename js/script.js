@@ -8,6 +8,8 @@ window.addEventListener('load', () => {
 AOS.init({ duration: 800, once: true });
 
 // ====== FILTROS DE PRODUCTOS ======
+// DESHABILITADO: Funcionalidad movida a main.js para evitar conflictos
+/*
 const filterBtns = document.querySelectorAll(".filter-btn");
 const cards = document.querySelectorAll(".card");
 
@@ -28,6 +30,7 @@ filterBtns.forEach(btn => {
     btn.classList.add("active");
   });
 });
+*/
 
 // ====== MODALES ======
 const nequiModal = document.getElementById('nequiModal');

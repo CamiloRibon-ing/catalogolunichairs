@@ -122,7 +122,7 @@ class Checkout {
     return { message, orderNumber };
   }
 
-  sendToWhatsApp() {
+  async sendToWhatsApp() {
     if (!this.validateCustomerForm()) {
       return;
     }
@@ -131,33 +131,38 @@ class Checkout {
     const total = cart.getTotal();
     const { message, orderNumber } = this.generateOrderMessage();
     
-    // Crear pedido en el sistema
-    const order = orderManager.createOrder(this.customerInfo, items, total);
+    try {
+      // Crear pedido en el sistema
+      const order = await orderManager.createOrder(this.customerInfo, items, total);
 
-    const phoneNumber = '573044952240'; // Número de WhatsApp de Luni
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+      const phoneNumber = '573044952240'; // Número de WhatsApp de Luni
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-    // Abrir WhatsApp
-    window.open(whatsappUrl, '_blank');
+      // Abrir WhatsApp
+      window.open(whatsappUrl, '_blank');
 
-    // Actualizar stock
-    cart.getItems().forEach(item => {
-      productManager.decreaseStock(item.productId, item.quantity);
-    });
+      // Actualizar stock
+      cart.getItems().forEach(item => {
+        productManager.decreaseStock(item.productId, item.quantity);
+      });
 
-    // Limpiar carrito
-    cart.clear();
+      // Limpiar carrito
+      cart.clear();
 
-    // Cerrar modal
-    this.closeCheckout();
+      // Cerrar modal
+      this.closeCheckout();
 
-    // Mostrar confirmación
-    showNotification(`✨ Pedido #${orderNumber} creado exitosamente ✨`, 'success');
+      // Mostrar confirmación
+      showNotification(`✨ Pedido #${orderNumber} creado exitosamente ✨`, 'success');
 
-    // Actualizar catálogo
-    if (window.renderProductCatalog) {
-      window.renderProductCatalog();
+      // Actualizar catálogo
+      if (window.renderProductCatalog) {
+        window.renderProductCatalog();
+      }
+    } catch (error) {
+      console.error('❌ Error creando orden:', error);
+      showNotification('Error al crear el pedido. Intenta nuevamente.', 'error');
     }
   }
 }

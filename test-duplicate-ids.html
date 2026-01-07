@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico - IDs Duplicados</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .log { background: #f5f5f5; padding: 10px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico de IDs Duplicados</h1>
+    
+    <div class="section">
+        <h3>Resultados del Análisis</h3>
+        <div id="results" class="log">Ejecutando análisis...</div>
+    </div>
+
+    <div class="section">
+        <h3>Test del Carrito</h3>
+        <button onclick="testCart()">Probar Carrito</button>
+        <div id="cart-results" class="log">Haz click para probar el carrito</div>
+    </div>
+
+    <script>
+        // Función para encontrar IDs duplicados
+        function findDuplicateIds() {
+            const allElements = document.querySelectorAll('[id]');
+            const idCounts = {};
+            const duplicates = [];
+            
+            allElements.forEach(element => {
+                const id = element.id;
+                if (idCounts[id]) {
+                    idCounts[id]++;
+                } else {
+                    idCounts[id] = 1;
+                }
+            });
+            
+            for (const [id, count] of Object.entries(idCounts)) {
+                if (count > 1) {
+                    duplicates.push({ id, count });
+                }
+            }
+            
+            return duplicates;
+        }
+
+        // Función para analizar la página principal
+        function analyzePage() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            try {
+                // Crear iframe para cargar la página principal
+                const iframe = document.createElement('iframe');
+                iframe.src = 'index.html';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                iframe.onload = function() {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const allElements = iframeDoc.querySelectorAll('[id]');
+                        const idCounts = {};
+                        const duplicates = [];
+                        
+                        allElements.forEach(element => {
+                            const id = element.id;
+                            if (idCounts[id]) {
+                                idCounts[id]++;
+                            } else {
+                                idCounts[id] = 1;
+                            }
+                        });
+                        
+                        for (const [id, count] of Object.entries(idCounts)) {
+                            if (count > 1) {
+                                duplicates.push({ id, count });
+                            }
+                        }
+                        
+                        let report = `📊 Análisis de IDs en index.html:\\n`;
+                        report += `- Total de elementos con ID: ${allElements.length}\\n`;
+                        report += `- IDs únicos: ${Object.keys(idCounts).length}\\n`;
+                        report += `- IDs duplicados: ${duplicates.length}\\n\\n`;
+                        
+                        if (duplicates.length > 0) {
+                            report += `❌ IDs DUPLICADOS ENCONTRADOS:\\n`;
+                            duplicates.forEach(dup => {
+                                report += `- ID "${dup.id}" aparece ${dup.count} veces\\n`;
+                                
+                                // Encontrar elementos con este ID
+                                const elements = iframeDoc.querySelectorAll(\`#\${dup.id}\`);
+                                elements.forEach((el, index) => {
+                                    report += \`  └─ [\${index + 1}] <\${el.tagName.toLowerCase()}\`;
+                                    if (el.className) report += \` class="\${el.className}"\`;
+                                    report += \`>\\n\`;
+                                });
+                            });
+                        } else {
+                            report += `✅ No se encontraron IDs duplicados`;
+                        }
+                        
+                        // Verificar elementos de carrito específicamente
+                        report += `\\n\\n🛒 Análisis de elementos del carrito:\\n`;
+                        const cartElements = [
+                            'cart-btn', 'cart-modal', 'cart-items', 'cart-total', 'cart-count', 'close-cart'
+                        ];
+                        
+                        cartElements.forEach(id => {
+                            const elements = iframeDoc.querySelectorAll(\`#\${id}\`);
+                            report += \`- #\${id}: \${elements.length} elemento(s)\\n\`;
+                        });
+                        
+                        results.innerHTML = report;
+                        
+                        // Limpiar iframe
+                        document.body.removeChild(iframe);
+                        
+                    } catch (error) {
+                        results.innerHTML = `❌ Error analizando el contenido: ${error.message}`;
+                        document.body.removeChild(iframe);
+                    }
+                };
+                
+                iframe.onerror = function() {
+                    results.innerHTML = '❌ Error cargando index.html';
+                    document.body.removeChild(iframe);
+                };
+                
+            } catch (error) {
+                results.innerHTML = `❌ Error general: ${error.message}`;
+            }
+        }
+
+        // Función para probar el carrito
+        function testCart() {
+            const cartResults = document.getElementById('cart-results');
+            let report = '🧪 Probando funcionalidad del carrito...\\n\\n';
+            
+            try {
+                // Verificar si los scripts están cargados
+                report += `📦 Scripts del carrito:\\n`;
+                report += `- Tipo de 'cart': ${typeof cart}\\n`;
+                report += `- Tipo de 'productManager': ${typeof productManager}\\n`;
+                report += `- Tipo de 'openCart': ${typeof openCart}\\n\\n`;
+                
+                // Intentar crear instancia de carrito si no existe
+                if (typeof cart === 'undefined') {
+                    report += '⚠️ Variable "cart" no encontrada. Intentando cargar...\\n';
+                    // Intentar cargar el script del carrito
+                    const script = document.createElement('script');
+                    script.src = 'js/cart.js';
+                    document.head.appendChild(script);
+                    
+                    script.onload = () => {
+                        report += '✅ Script cart.js cargado\\n';
+                        cartResults.innerHTML = report;
+                    };
+                    
+                    script.onerror = () => {
+                        report += '❌ Error cargando cart.js\\n';
+                        cartResults.innerHTML = report;
+                    };
+                } else {
+                    report += '✅ Variable "cart" está disponible\\n';
+                }
+                
+                cartResults.innerHTML = report;
+                
+            } catch (error) {
+                cartResults.innerHTML = `❌ Error probando carrito: ${error.message}`;
+            }
+        }
+
+        // Ejecutar análisis cuando se carga la página
+        window.onload = function() {
+            analyzePage();
+        };
+    </script>
+</body>
+</html>

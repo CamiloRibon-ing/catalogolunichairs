@@ -1,36 +1,181 @@
-// Panel de administración mejorado
+// Panel de administración limpio y sin duplicados
 class AdminPanel {
   constructor() {
-    this.currentTab = 'products';
+    this.currentTab = 'dashboard';
     this.init();
   }
 
   init() {
+    this.setupEventListeners();
     this.updateAuthUI();
-    this.setupEventListeners(); // Siempre configurar event listeners
-    if (authSystem.isAuthenticated()) {
-      this.showAdminButton();
-    }
+    console.log('✅ AdminPanel inicializado correctamente');
   }
 
+  // ===== GESTIÓN DE AUTENTICACIÓN =====
   updateAuthUI() {
     const loginBtn = document.getElementById('header-login-btn');
     const userMenu = document.getElementById('user-menu');
-    const currentUser = authSystem.getCurrentUser();
+    const currentUser = authSystem?.getCurrentUser();
 
-    if (authSystem.isAuthenticated() && currentUser) {
+    if (authSystem?.isAuthenticated() && currentUser) {
       if (loginBtn) loginBtn.style.display = 'none';
       if (userMenu) {
         userMenu.style.display = 'flex';
         const usernameSpan = document.getElementById('current-username');
-        if (usernameSpan) usernameSpan.textContent = currentUser.name || currentUser.username;
+        if (usernameSpan) {
+          usernameSpan.textContent = currentUser.name || currentUser.username;
+        }
       }
+      this.showAdminButton();
     } else {
-      if (loginBtn) loginBtn.style.display = 'block';
+      if (loginBtn) loginBtn.style.display = 'flex';
       if (userMenu) userMenu.style.display = 'none';
+      this.hideAdminButton();
     }
   }
 
+  setupEventListeners() {
+    // Event listeners para header
+    document.addEventListener('DOMContentLoaded', () => {
+      this.setupHeaderListeners();
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.initAdminListeners());
+    } else {
+      this.initAdminListeners();
+    }
+  }
+
+  setupHeaderListeners() {
+    const loginBtn = document.getElementById('header-login-btn');
+    if (loginBtn && !loginBtn.hasAttribute('data-listener')) {
+      loginBtn.setAttribute('data-listener', 'true');
+      loginBtn.addEventListener('click', () => this.showLoginModal());
+    }
+
+    const logoutBtn = document.getElementById('header-logout-btn');
+    if (logoutBtn && !logoutBtn.hasAttribute('data-listener')) {
+      logoutBtn.setAttribute('data-listener', 'true');
+      logoutBtn.addEventListener('click', () => this.logout());
+    }
+  }
+
+  initAdminListeners() {
+    const closeBtn = document.getElementById('admin-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.closeAdminPanel());
+    }
+
+    // Event listeners para categorías
+    const addCategoryBtn = document.getElementById('admin-add-category');
+    if (addCategoryBtn) {
+      addCategoryBtn.addEventListener('click', () => this.showAddCategoryForm());
+    }
+    
+    const saveCategoryBtn = document.getElementById('save-category-btn');
+    if (saveCategoryBtn) {
+      saveCategoryBtn.addEventListener('click', () => this.saveCategory());
+    }
+    
+    // Event listeners para productos
+    const saveProductBtn = document.getElementById('save-product-btn');
+    if (saveProductBtn) {
+      saveProductBtn.addEventListener('click', () => this.saveProduct());
+    }
+    
+    // Event listener para subida de imagen
+    const imageInput = document.getElementById('product-image-input');
+    if (imageInput) {
+      imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
+    }
+
+    // Event listener para botón Salir
+    const logoutBtn = document.getElementById('admin-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => this.closeAdminPanel());
+    }
+
+    // Configurar menú hamburguesa para tabs en mobile
+    this.setupMobileTabsMenu();
+  }
+
+  // Configurar menú hamburguesa para tabs en mobile
+  setupMobileTabsMenu() {
+    // Crear HTML del menú hamburguesa si no existe
+    const adminTabs = document.querySelector('.admin-tabs');
+    if (adminTabs && !document.querySelector('.admin-tabs-toggle')) {
+      const currentActiveTab = document.querySelector('.admin-tab.active');
+      const activeTabText = currentActiveTab ? currentActiveTab.textContent.trim() : 'Dashboard';
+      
+      adminTabs.innerHTML = `
+        <div class="admin-tabs-toggle" onclick="adminPanel.toggleMobileTabsMenu()">
+          <span class="current-tab-text">${activeTabText}</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="admin-tabs-container">
+          <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
+            <i class="fas fa-chart-line"></i> Dashboard
+          </button>
+          <button class="admin-tab" data-tab="orders" onclick="showAdminTab('orders')">
+            <i class="fas fa-shopping-bag"></i> Ventas
+          </button>
+          <button class="admin-tab" data-tab="categories" onclick="showAdminTab('categories')">
+            <i class="fas fa-tags"></i> Categorías
+          </button>
+          <button class="admin-tab" data-tab="products" onclick="showAdminTab('products')">
+            <i class="fas fa-box"></i> Productos
+          </button>
+          <button class="admin-tab" data-tab="add-product" onclick="showAdminTab('add-product')">
+            <i class="fas fa-plus"></i> Agregar Producto
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // Toggle menú hamburguesa
+  toggleMobileTabsMenu() {
+    const toggle = document.querySelector('.admin-tabs-toggle');
+    const container = document.querySelector('.admin-tabs-container');
+    
+    if (toggle && container) {
+      const isOpen = container.classList.contains('show');
+      
+      if (isOpen) {
+        container.classList.remove('show');
+        toggle.classList.remove('active');
+      } else {
+        container.classList.add('show');
+        toggle.classList.add('active');
+      }
+    }
+  }
+
+  // Actualizar texto del tab activo en mobile
+  updateMobileActiveTab(tabName) {
+    const currentTabText = document.querySelector('.current-tab-text');
+    if (currentTabText) {
+      const tabNames = {
+        'dashboard': 'Dashboard',
+        'orders': 'Ventas', 
+        'categories': 'Categorías',
+        'products': 'Productos',
+        'add-product': 'Agregar Producto'
+      };
+      currentTabText.textContent = tabNames[tabName] || 'Dashboard';
+    }
+    
+    // Cerrar menú después de seleccionar
+    const container = document.querySelector('.admin-tabs-container');
+    const toggle = document.querySelector('.admin-tabs-toggle');
+    if (container && toggle) {
+      container.classList.remove('show');
+      toggle.classList.remove('active');
+    }
+  }
+
+  // ===== MODAL DE LOGIN =====
   showLoginModal() {
     const existingModal = document.getElementById('login-modal');
     if (existingModal) {
@@ -47,10 +192,6 @@ class AdminPanel {
           <i class="fas fa-times"></i>
         </button>
         <div class="login-header">
-          <div class="login-logo-wrapper">
-            <img src="recursos/lunilogo.png" alt="Luni Logo" class="login-logo">
-            <div class="logo-glow"></div>
-          </div>
           <h2>🌸 Panel de Administración 🌸</h2>
           <p>Ingresa tus credenciales para acceder</p>
         </div>
@@ -59,51 +200,29 @@ class AdminPanel {
             <label for="login-username">
               <i class="fas fa-user"></i> Usuario
             </label>
-            <input type="text" id="login-username" required autocomplete="username" placeholder="Ingresa tu usuario">
+            <input type="text" id="login-username" required placeholder="Ingresa tu usuario">
           </div>
           <div class="form-group">
             <label for="login-password">
               <i class="fas fa-lock"></i> Contraseña
             </label>
-            <input type="password" id="login-password" required autocomplete="current-password" placeholder="Ingresa tu contraseña">
+            <input type="password" id="login-password" required placeholder="Ingresa tu contraseña">
           </div>
-          <div id="login-error" class="error-message" style="display: none;"></div>
-          <button type="submit" class="btn btn-login">
-            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-          </button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            </button>
+          </div>
         </form>
-        <div class="login-footer">
-          <p><small>💡 Usuario: <strong>admin</strong> / Contraseña: <strong>admin123</strong></small></p>
-        </div>
       </div>
     `;
+
     document.body.appendChild(modal);
     modal.style.display = 'flex';
 
-    // Event listeners
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleLogin();
-    });
-  }
-
-  handleLogin() {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    const errorDiv = document.getElementById('login-error');
-
-    const result = authSystem.login(username, password);
-    
-    if (result.success) {
-      this.closeLoginModal();
-      this.showAdminButton();
-      this.setupEventListeners();
-      this.updateAuthUI();
-      showNotification('✨ Sesión iniciada correctamente ✨', 'success');
-    } else {
-      errorDiv.textContent = result.message;
-      errorDiv.style.display = 'block';
-    }
+    // Event listener para el formulario
+    const form = document.getElementById('login-form');
+    form.addEventListener('submit', (e) => this.handleLogin(e));
   }
 
   closeLoginModal() {
@@ -113,86 +232,196 @@ class AdminPanel {
     }
   }
 
+  handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    const result = authSystem?.login(username, password);
+    if (result && result.success) {
+      this.closeLoginModal();
+      this.updateAuthUI();
+      this.showNotification('🎉 ¡Bienvenido al Panel de Administración!', 'success');
+      console.log('✅ Login exitoso');
+    } else {
+      const errorMessage = result?.message || 'Credenciales incorrectas';
+      this.showNotification(`❌ Error de acceso: ${errorMessage}`, 'error');
+      console.log('❌ Error de login:', errorMessage);
+    }
+  }
+
+  logout() {
+    if (authSystem?.logout()) {
+      this.showNotification('👋 Sesión cerrada exitosamente', 'info');
+      this.closeAdminPanel();
+      this.updateAuthUI();
+      console.log('✅ Logout exitoso');
+    }
+  }
+
+  // ===== GESTIÓN DEL BOTÓN ADMIN =====
   showAdminButton() {
     if (document.getElementById('admin-btn')) return;
 
-    const adminBtn = document.createElement('div');
+    const userActions = document.querySelector('.user-actions');
+    if (!userActions) return;
+
+    const adminBtn = document.createElement('button');
     adminBtn.id = 'admin-btn';
-    adminBtn.className = 'admin-btn';
-    adminBtn.innerHTML = '<i class="fas fa-cog"></i>';
-    adminBtn.title = 'Panel de Administración';
-    adminBtn.addEventListener('click', () => this.openAdminPanel());
-    document.body.appendChild(adminBtn);
-  }
-
-  openAdminPanel() {
-    const modal = document.getElementById('admin-modal');
-    if (modal) {
-      modal.style.display = 'flex';
-      // Cargar dashboard por defecto
-      this.loadDashboard();
-      this.loadOrdersList();
-      this.loadCategoriesList();
-      this.loadProductsList();
-      this.updateOrdersStats();
-    }
-  }
-
-  // ===== DASHBOARD/ESTADÍSTICAS =====
-  loadDashboard() {
-    // Actualizar estadísticas generales
-    const stats = statisticsManager.getGeneralStats();
+    adminBtn.className = 'btn-admin-header';
+    adminBtn.innerHTML = '<i class="fas fa-cogs"></i><span class="btn-text">Panel Admin</span>';
     
-    const totalRevenueEl = document.getElementById('stat-total-revenue');
-    const totalOrdersEl = document.getElementById('stat-total-orders');
-    const averageOrderEl = document.getElementById('stat-average-order');
-    const pendingEl = document.getElementById('stat-pending');
-
-    if (totalRevenueEl) totalRevenueEl.textContent = `$${stats.totalRevenue.toLocaleString('es-CO')}`;
-    if (totalOrdersEl) totalOrdersEl.textContent = stats.totalOrders;
-    if (averageOrderEl) averageOrderEl.textContent = `$${Math.round(stats.averageOrder).toLocaleString('es-CO')}`;
-    if (pendingEl) pendingEl.textContent = stats.pendingOrders;
-
-    // Cargar productos con poco stock
-    this.loadLowStockProducts();
-
-    // Renderizar gráficas (con delay para asegurar que el DOM esté listo)
-    setTimeout(() => {
-      statisticsManager.renderAllCharts();
-    }, 100);
+    adminBtn.onclick = () => this.showAdminPanel();
+    
+    const logoutBtn = document.getElementById('header-logout-btn');
+    userActions.insertBefore(adminBtn, logoutBtn);
   }
 
-  loadLowStockProducts() {
-    const list = document.getElementById('low-stock-list');
-    if (!list) return;
+  hideAdminButton() {
+    const adminBtn = document.getElementById('admin-btn');
+    if (adminBtn) adminBtn.remove();
+  }
 
-    const lowStockProducts = statisticsManager.getLowStockProducts(5);
-    list.innerHTML = '';
-
-    if (lowStockProducts.length === 0) {
-      list.innerHTML = '<p class="empty-state">✅ Todos los productos tienen stock suficiente</p>';
+  // ===== PANEL DE ADMINISTRACIÓN =====
+  showAdminPanel() {
+    if (!authSystem?.isAuthenticated()) {
+      this.showLoginModal();
       return;
     }
 
-    lowStockProducts.forEach(product => {
-      const item = document.createElement('div');
-      item.className = 'low-stock-item';
-      const stockClass = product.stock === 0 ? 'out-of-stock' : product.stock <= 2 ? 'critical' : 'low';
-      item.innerHTML = `
-        <div class="low-stock-info">
-          <h5>${product.name}</h5>
-          <p>${product.category} | $${product.price.toLocaleString('es-CO')}</p>
+    const existingModal = document.getElementById('admin-modal');
+    if (existingModal) {
+      existingModal.style.display = 'flex';
+      return;
+    }
+
+    this.createAdminModal();
+  }
+
+  createAdminModal() {
+    const modal = document.createElement('div');
+    modal.id = 'admin-modal';
+    modal.className = 'modal admin-modal';
+    modal.innerHTML = `
+      <div class="modal-content admin-modal-content">
+        <div class="admin-header">
+          <h2><i class="fas fa-crown"></i> Panel de Administración</h2>
+          <button id="admin-close" class="modal-close-btn">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="low-stock-stock ${stockClass}">
-          <span class="stock-label">Stock:</span>
-          <span class="stock-value">${product.stock}</span>
+        
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
+            <i class="fas fa-chart-pie"></i> Dashboard
+          </button>
+          <button class="admin-tab" data-tab="orders" onclick="showAdminTab('orders')">
+            <i class="fas fa-shopping-cart"></i> Ventas
+          </button>
+          <button class="admin-tab" data-tab="products" onclick="showAdminTab('products')">
+            <i class="fas fa-box"></i> Productos
+          </button>
+          <button class="admin-tab" data-tab="categories" onclick="showAdminTab('categories')">
+            <i class="fas fa-tags"></i> Categorías
+          </button>
+          <button class="admin-tab" data-tab="add-product" onclick="showAdminTab('add-product')">
+            <i class="fas fa-plus"></i> Agregar
+          </button>
         </div>
-        <button onclick="adminPanel.editProduct('${product.id}')" class="btn-edit-small">
-          <i class="fas fa-edit"></i> Actualizar
-        </button>
-      `;
-      list.appendChild(item);
-    });
+
+        <div class="admin-content">
+          <div id="admin-dashboard-tab" class="admin-tab-content active">
+            <h3><i class="fas fa-chart-line"></i> Dashboard</h3>
+            <div class="dashboard-stats">
+              <div class="stat-card">
+                <h4>Total Ventas</h4>
+                <p id="total-sales">$0</p>
+              </div>
+              <div class="stat-card">
+                <h4>Órdenes Hoy</h4>
+                <p id="orders-today">0</p>
+              </div>
+              <div class="stat-card">
+                <h4>Productos</h4>
+                <p id="total-products">0</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="admin-orders-tab" class="admin-tab-content">
+            <h3><i class="fas fa-shopping-cart"></i> Gestión de Ventas</h3>
+            <div class="orders-filters">
+              <button class="filter-status active" data-status="all" onclick="filterOrders('all')">Todas</button>
+              <button class="filter-status" data-status="pendiente" onclick="filterOrders('pendiente')">Pendientes</button>
+              <button class="filter-status" data-status="confirmado" onclick="filterOrders('confirmado')">Confirmadas</button>
+              <button class="filter-status" data-status="enviado" onclick="filterOrders('enviado')">Enviadas</button>
+            </div>
+            <div id="admin-orders-list" class="admin-orders-list">
+              <!-- Las órdenes se cargan dinámicamente -->
+            </div>
+          </div>
+
+          <div id="admin-products-tab" class="admin-tab-content">
+            <h3><i class="fas fa-box"></i> Gestión de Productos</h3>
+            <div id="admin-products-list" class="admin-products-list">
+              <!-- Los productos se cargan dinámicamente -->
+            </div>
+          </div>
+
+          <div id="admin-categories-tab" class="admin-tab-content">
+            <h3><i class="fas fa-tags"></i> Gestión de Categorías</h3>
+            <div id="admin-categories-list" class="admin-categories-list">
+              <!-- Las categorías se cargan dinámicamente -->
+            </div>
+          </div>
+
+          <div id="admin-add-tab" class="admin-tab-content">
+            <h3><i class="fas fa-plus"></i> Agregar Producto</h3>
+            <form id="add-product-form" class="product-form">
+              <div class="form-group">
+                <label for="product-name">Nombre del Producto</label>
+                <input type="text" id="product-name" required>
+              </div>
+              <div class="form-group">
+                <label for="product-price">Precio</label>
+                <input type="number" id="product-price" required>
+              </div>
+              <div class="form-group">
+                <label for="product-category">Categoría</label>
+                <select id="product-category" required>
+                  <option value="">Selecciona una categoría</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="product-image">Imagen</label>
+                <input type="file" id="product-image" accept="image/*">
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Agregar Producto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'flex';
+    
+    this.setupAdminEventListeners();
+    this.loadDashboard();
+  }
+
+  setupAdminEventListeners() {
+    const closeBtn = document.getElementById('admin-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.closeAdminPanel());
+    }
+
+    const addProductForm = document.getElementById('add-product-form');
+    if (addProductForm) {
+      addProductForm.addEventListener('submit', (e) => this.handleAddProduct(e));
+    }
   }
 
   closeAdminPanel() {
@@ -202,598 +431,2211 @@ class AdminPanel {
     }
   }
 
-  setupEventListeners() {
-    // Configurar listeners básicos inmediatamente
-    this.setupBasicEventListeners();
+  // ===== CARGA DE DATOS =====
+  loadDashboard() {
+    console.log('🔄 Cargando dashboard...');
     
-    // Configurar listeners del admin si el DOM está listo
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.initEventListeners());
-    } else {
-      this.initEventListeners();
+    try {
+      const orders = orderManager?.orders || [];
+      const products = productManager?.products || [];
+      
+      // Si no hay órdenes, crear datos de ejemplo para mostrar
+      let effectiveOrders = orders;
+      if (orders.length === 0) {
+        console.log('📊 No hay órdenes, creando datos de ejemplo para estadísticas...');
+        effectiveOrders = [
+          { 
+            id: 1, 
+            orderNumber: 'ORD-000001',
+            total: 2850000, 
+            status: 'completed', 
+            date: new Date(Date.now() - 86400000),
+            customer_info: {
+              name: 'María González',
+              email: 'maria@email.com',
+              phone: '3001234567',
+              address: 'Calle 123 #45-67, Bogotá'
+            },
+            items: [
+              { productName: 'Silla Ejecutiva Premium', quantity: 1, price: 2850000 }
+            ]
+          },
+          { 
+            id: 2, 
+            orderNumber: 'ORD-000002',
+            total: 1250000, 
+            status: 'pending', 
+            date: new Date(Date.now() - 172800000),
+            customer_info: {
+              name: 'Carlos Rodríguez',
+              email: 'carlos@email.com',
+              phone: '3009876543',
+              address: 'Carrera 50 #20-30, Medellín'
+            },
+            items: [
+              { productName: 'Silla de Oficina Básica', quantity: 2, price: 625000 }
+            ]
+          },
+          { 
+            id: 3, 
+            orderNumber: 'ORD-000003',
+            total: 3450000, 
+            status: 'completed', 
+            date: new Date(Date.now() - 259200000),
+            customer_info: {
+              name: 'Ana Jiménez',
+              email: 'ana@email.com',
+              phone: '3005555555',
+              address: 'Avenida 15 #80-25, Cali'
+            },
+            items: [
+              { productName: 'Set de Sillas de Reunión', quantity: 1, price: 3450000 }
+            ]
+          },
+          { 
+            id: 4, 
+            orderNumber: 'ORD-000004',
+            total: 890000, 
+            status: 'completed', 
+            date: new Date(Date.now() - 345600000),
+            customer_info: {
+              name: 'Luis Martínez',
+              email: 'luis@email.com',
+              phone: '3007777777',
+              address: 'Calle 70 #11-50, Barranquilla'
+            },
+            items: [
+              { productName: 'Silla Ergonómica', quantity: 1, price: 890000 }
+            ]
+          },
+          { 
+            id: 5, 
+            orderNumber: 'ORD-000005',
+            total: 1750000, 
+            status: 'confirmed', 
+            date: new Date(Date.now() - 432000000),
+            customer_info: {
+              name: 'Sandra Pérez',
+              email: 'sandra@email.com',
+              phone: '3008888888',
+              address: 'Transversal 25 #60-40, Bucaramanga'
+            },
+            items: [
+              { productName: 'Silla Gaming Pro', quantity: 1, price: 1750000 }
+            ]
+          },
+          { 
+            id: 6, 
+            orderNumber: 'ORD-000006',
+            total: 950000, 
+            status: 'confirmed', 
+            date: new Date(Date.now() - 518400000),
+            customer_info: {
+              name: 'Jorge Morales',
+              email: 'jorge@email.com',
+              phone: '3009999999',
+              address: 'Calle 45 #30-15, Pereira'
+            },
+            items: [
+              { productName: 'Silla Ejecutiva Clásica', quantity: 1, price: 950000 }
+            ]
+          }
+        ];
+      }
+      
+      // Filtrar órdenes que cuentan para estadísticas (excluir pending y cancelled)
+      const validOrdersForStats = effectiveOrders.filter(order => 
+        order.status !== 'pending' && order.status !== 'cancelled'
+      );
+      
+      const totalRevenue = validOrdersForStats.reduce((sum, order) => sum + (order.total || 0), 0);
+      const totalOrders = validOrdersForStats.length;
+      const averageOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+      const pendingOrders = effectiveOrders.filter(order => order.status === 'pending').length;
+
+      // Actualizar estadísticas
+      const revenueEl = document.getElementById('stat-total-revenue');
+      const ordersEl = document.getElementById('stat-total-orders');
+      const averageEl = document.getElementById('stat-average-order');
+      const pendingEl = document.getElementById('stat-pending');
+
+      if (revenueEl) revenueEl.textContent = `$${totalRevenue.toLocaleString('es-CO')}`;
+      if (ordersEl) ordersEl.textContent = totalOrders;
+      if (averageEl) averageEl.textContent = `$${averageOrder.toLocaleString('es-CO')}`;
+      if (pendingEl) pendingEl.textContent = pendingOrders;
+
+      console.log(`✅ Dashboard actualizado: ${totalOrders} órdenes válidas (excluyendo pending/cancelled), $${totalRevenue.toLocaleString('es-CO')} ingresos`);
+      console.log(`📊 Desglose: ${effectiveOrders.length} órdenes totales, ${pendingOrders} pendientes, ${effectiveOrders.filter(o => o.status === 'cancelled').length} canceladas`);
+      
+      // Cargar gráficas si están disponibles
+      this.loadCharts();
+      
+      // Cargar productos con poco stock
+      this.loadLowStockProducts();
+    } catch (error) {
+      console.error('❌ Error cargando dashboard:', error);
     }
   }
 
-  setupBasicEventListeners() {
-    // Configurar botón de login del header (siempre disponible)
-    const headerLoginBtn = document.getElementById('header-login-btn');
-    if (headerLoginBtn && !headerLoginBtn.hasAttribute('data-listener')) {
-      headerLoginBtn.setAttribute('data-listener', 'true');
-      headerLoginBtn.addEventListener('click', () => {
-        this.showLoginModal();
-      });
+  loadCharts() {
+    console.log('📊 Cargando gráficas...');
+    
+    try {
+      const orders = orderManager?.orders || [];
+      
+      // Si no hay órdenes, usar las de ejemplo
+      let effectiveOrders = orders;
+      if (orders.length === 0) {
+        effectiveOrders = this.getExampleOrders();
+      }
+      
+      // Filtrar órdenes válidas para gráficas (excluir pending y cancelled)
+      const validOrders = effectiveOrders.filter(order => 
+        order.status !== 'pending' && order.status !== 'cancelled'
+      );
+      
+      // Gráfica de productos más vendidos
+      this.loadTopProductsChart(validOrders);
+      
+      // Gráfica de distribución por estados
+      this.loadStatusPieChart(effectiveOrders);
+      
+      // Gráfica de ventas por día
+      this.loadSalesChart(validOrders, 'day');
+      
+    } catch (error) {
+      console.error('❌ Error cargando gráficas:', error);
     }
   }
 
-  initEventListeners() {
-    const closeBtn = document.getElementById('admin-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => this.closeAdminPanel());
+  loadTopProductsChart(orders) {
+    const canvas = document.getElementById('top-products-chart');
+    if (!canvas) return;
+
+    // Contar productos vendidos
+    const productCounts = {};
+    orders.forEach(order => {
+      if (order.items) {
+        order.items.forEach(item => {
+          const productName = item.productName || item.name || 'Producto sin nombre';
+          productCounts[productName] = (productCounts[productName] || 0) + (item.quantity || 1);
+        });
+      }
+    });
+
+    // Convertir a array y ordenar
+    const sortedProducts = Object.entries(productCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5); // Top 5
+
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfica anterior si existe
+    if (window.topProductsChart) {
+      window.topProductsChart.destroy();
     }
 
-    const logoutBtn = document.getElementById('admin-logout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        if (confirm('¿Deseas cerrar sesión?')) {
-          authSystem.logout();
+    window.topProductsChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: sortedProducts.map(([name]) => name.length > 20 ? name.substring(0, 20) + '...' : name),
+        datasets: [{
+          label: 'Cantidad Vendida',
+          data: sortedProducts.map(([, count]) => count),
+          backgroundColor: '#e74c3c',
+          borderColor: '#c0392b',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Productos Más Vendidos'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
         }
-      });
-    }
-
-    const headerLogoutBtn = document.getElementById('header-logout-btn');
-    if (headerLogoutBtn) {
-      headerLogoutBtn.addEventListener('click', () => {
-        if (confirm('¿Deseas cerrar sesión?')) {
-          authSystem.logout();
-        }
-      });
-    }
-
-    const headerLoginBtn = document.getElementById('header-login-btn');
-    if (headerLoginBtn) {
-      headerLoginBtn.addEventListener('click', () => {
-        this.showLoginModal();
-      });
-    }
-
-    const addCategoryBtn = document.getElementById('admin-add-category');
-    if (addCategoryBtn) {
-      addCategoryBtn.addEventListener('click', () => this.showAddCategoryForm());
-    }
-
-    const saveCategoryBtn = document.getElementById('save-category-btn');
-    if (saveCategoryBtn) {
-      saveCategoryBtn.addEventListener('click', () => this.saveCategory());
-    }
-
-    const addProductBtn = document.getElementById('admin-add-product');
-    if (addProductBtn) {
-      addProductBtn.addEventListener('click', () => this.showAddProductForm());
-    }
-
-    const saveProductBtn = document.getElementById('save-product-btn');
-    if (saveProductBtn) {
-      saveProductBtn.addEventListener('click', () => this.saveProduct());
-    }
-
-    // Upload de imagen
-    const imageInput = document.getElementById('product-image-input');
-    if (imageInput) {
-      imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
-    }
+      }
+    });
   }
 
-  // ===== GESTIÓN DE CATEGORÍAS =====
-  loadCategoriesList() {
-    const list = document.getElementById('admin-categories-list');
-    if (!list) return;
+  loadStatusPieChart(orders) {
+    const canvas = document.getElementById('status-pie-chart');
+    if (!canvas) return;
 
-    const categories = categoryManager.getAllCategories();
-    list.innerHTML = '';
+    // Contar órdenes por estado
+    const statusCounts = {};
+    const statusLabels = {
+      'pending': 'Pendiente',
+      'confirmed': 'Confirmado', 
+      'preparing': 'En Preparación',
+      'shipped': 'Enviado',
+      'delivered': 'Entregado',
+      'completed': 'Completado',
+      'cancelled': 'Cancelado'
+    };
 
-    if (categories.length === 0) {
-      list.innerHTML = '<p class="empty-state">No hay categorías registradas</p>';
-      return;
+    orders.forEach(order => {
+      const status = order.status || 'pending';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfica anterior si existe
+    if (window.statusPieChart) {
+      window.statusPieChart.destroy();
     }
 
-    categories.forEach((category) => {
-      const item = document.createElement('div');
-      item.className = `admin-category-item ${!category.active ? 'inactive' : ''}`;
-      item.innerHTML = `
-        <div class="admin-category-info">
-          <span class="category-icon">${category.icon || '📁'}</span>
-          <div>
-            <h4>${category.name}</h4>
-            <p>Slug: ${category.slug} | ${category.active ? 'Activa' : 'Inactiva'}</p>
+    const colors = {
+      'pending': '#FFA726',      // Naranja - En espera
+      'confirmed': '#42A5F5',    // Azul - Confirmado
+      'preparing': '#AB47BC',    // Púrpura - En preparación
+      'shipped': '#26C6DA',      // Cian - Enviado
+      'delivered': '#66BB6A',    // Verde claro - Entregado
+      'completed': '#2E7D32',    // Verde oscuro - Completado
+      'cancelled': '#EF5350'     // Rojo - Cancelado
+    };
+
+    window.statusPieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statusCounts).map(status => statusLabels[status] || status),
+        datasets: [{
+          data: Object.values(statusCounts),
+          backgroundColor: Object.keys(statusCounts).map(status => colors[status] || '#95a5a6'),
+          borderColor: '#ffffff',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Distribución por Estados'
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  loadSalesChart(orders, period = 'day') {
+    const canvas = document.getElementById('sales-day-chart');
+    if (!canvas) return;
+
+    // Agrupar ventas por fecha
+    const salesByDate = {};
+    const now = new Date();
+    
+    // Preparar fechas para el período
+    const dates = [];
+    const salesData = [];
+    
+    if (period === 'day') {
+      // Últimos 7 días
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('es-CO');
+        dates.push(dateStr);
+        salesByDate[dateStr] = 0;
+      }
+    } else if (period === 'week') {
+      // Últimas 4 semanas
+      for (let i = 3; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (i * 7));
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        const weekLabel = `Semana ${weekStart.toLocaleDateString('es-CO', {month: 'short', day: 'numeric'})}`;
+        dates.push(weekLabel);
+        salesByDate[weekLabel] = 0;
+      }
+    } else if (period === 'month') {
+      // Últimos 6 meses
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now);
+        date.setMonth(date.getMonth() - i);
+        const monthLabel = date.toLocaleDateString('es-CO', {year: 'numeric', month: 'long'});
+        dates.push(monthLabel);
+        salesByDate[monthLabel] = 0;
+      }
+    }
+
+    // Sumar ventas por fecha
+    orders.forEach(order => {
+      const orderDate = new Date(order.date || order.created_at || now);
+      let dateKey;
+      
+      if (period === 'day') {
+        dateKey = orderDate.toLocaleDateString('es-CO');
+      } else if (period === 'week') {
+        const weekStart = new Date(orderDate);
+        weekStart.setDate(orderDate.getDate() - orderDate.getDay());
+        dateKey = `Semana ${weekStart.toLocaleDateString('es-CO', {month: 'short', day: 'numeric'})}`;
+      } else if (period === 'month') {
+        dateKey = orderDate.toLocaleDateString('es-CO', {year: 'numeric', month: 'long'});
+      }
+      
+      if (salesByDate.hasOwnProperty(dateKey)) {
+        salesByDate[dateKey] += order.total || 0;
+      }
+    });
+
+    dates.forEach(date => {
+      salesData.push(salesByDate[date] || 0);
+    });
+
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfica anterior si existe
+    if (window.salesChart) {
+      window.salesChart.destroy();
+    }
+
+    window.salesChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: 'Ventas ($)',
+          data: salesData,
+          borderColor: '#e74c3c',
+          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: period === 'day' ? 'Ventas por Día (Últimos 7 días)' : 
+                  period === 'week' ? 'Ventas por Semana (Últimas 4 semanas)' :
+                  'Ventas por Mes (Últimos 6 meses)'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString('es-CO');
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  loadLowStockProducts() {
+    console.log('📦 Cargando productos con poco stock...');
+    
+    try {
+      const products = productManager?.products || [];
+      
+      // Filtrar productos con stock bajo (menos de 10 unidades)
+      const lowStockProducts = products.filter(product => {
+        const stock = parseInt(product.stock) || 0;
+        return stock > 0 && stock < 10;
+      }).sort((a, b) => (parseInt(a.stock) || 0) - (parseInt(b.stock) || 0));
+      
+      const lowStockContainer = document.getElementById('low-stock-list');
+      if (!lowStockContainer) {
+        console.log('⚠️ Contenedor de productos con poco stock no encontrado');
+        return;
+      }
+      
+      if (lowStockProducts.length === 0) {
+        lowStockContainer.innerHTML = `
+          <div class="low-stock-empty">
+            <i class="fas fa-check-circle"></i>
+            <p>Todos los productos tienen stock suficiente</p>
           </div>
+        `;
+        return;
+      }
+      
+      lowStockContainer.innerHTML = `
+        <div class="low-stock-header">
+          <h4><i class="fas fa-exclamation-triangle"></i> Productos con Poco Stock</h4>
+          <span class="stock-count">${lowStockProducts.length} productos</span>
         </div>
-        <div class="admin-category-actions">
-          <button onclick="adminPanel.editCategory('${category.id}')" class="btn-edit">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button onclick="adminPanel.deleteCategory('${category.id}')" class="btn-delete">
-            <i class="fas fa-trash"></i> Eliminar
-          </button>
+        <div class="low-stock-items">
+          ${lowStockProducts.map(product => {
+            const stockLevel = parseInt(product.stock) || 0;
+            const urgencyClass = stockLevel <= 3 ? 'critical' : stockLevel <= 6 ? 'warning' : 'low';
+            
+            return `
+              <div class="low-stock-item ${urgencyClass}">
+                <div class="product-info">
+                  <div class="product-image">
+                    ${product.image ? 
+                      `<img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yMCAzMkMyNi42Mjc0IDMyIDMyIDI2LjYyNzQgMzIgMjBDMzIgMTMuMzcyNiAyNi42Mjc0IDggMjAgOEMxMy4zNzI2IDggOCAxMy4zNzI2IDggMjBDOCAyNi42Mjc0IDEzLjM3MjYgMzIgMjAgMzJaIiBmaWxsPSIjRERERERFIi8+CjxwYXRoIGQ9Ik0xNiAxNkgyNFYyNEgxNlYxNloiIGZpbGw9IiNCQkJCQkIiLz4KPC9zdmc+Cg==" />` : 
+                      `<div class="product-placeholder"><i class="fas fa-chair"></i></div>`
+                    }
+                  </div>
+                  <div class="product-details">
+                    <h5>${product.name}</h5>
+                    <p class="product-category">${product.category || 'Sin categoría'}</p>
+                    <p class="product-price">$${(product.price || 0).toLocaleString('es-CO')}</p>
+                  </div>
+                </div>
+                <div class="stock-info">
+                  <div class="stock-number ${urgencyClass}">
+                    <span class="stock-value">${stockLevel}</span>
+                    <span class="stock-label">unidades</span>
+                  </div>
+                  <div class="stock-indicator ${urgencyClass}">
+                    <i class="fas fa-${urgencyClass === 'critical' ? 'exclamation-circle' : urgencyClass === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    <span>${urgencyClass === 'critical' ? 'Crítico' : urgencyClass === 'warning' ? 'Bajo' : 'Revisar'}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
-      list.appendChild(item);
-    });
-  }
-
-  showAddCategoryForm(category = null) {
-    const form = document.getElementById('category-form');
-    if (!form) return;
-
-    if (category) {
-      document.getElementById('category-id').value = category.id;
-      document.getElementById('category-name').value = category.name;
-      document.getElementById('category-slug').value = category.slug;
-      document.getElementById('category-icon').value = category.icon || '';
-      document.getElementById('category-active').checked = category.active !== false;
-      document.getElementById('category-form-title').textContent = 'Editar Categoría';
-    } else {
-      form.reset();
-      document.getElementById('category-id').value = '';
-      document.getElementById('category-form-title').textContent = 'Agregar Nueva Categoría';
-    }
-
-    form.style.display = 'block';
-    form.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  saveCategory() {
-    const id = document.getElementById('category-id').value;
-    const name = document.getElementById('category-name').value;
-    const slug = document.getElementById('category-slug').value.toLowerCase().replace(/\s+/g, '');
-    const icon = document.getElementById('category-icon').value;
-    const active = document.getElementById('category-active').checked;
-
-    if (!name || !slug) {
-      showNotification('Por favor complete todos los campos requeridos', 'error');
-      return;
-    }
-
-    // Verificar slug único
-    const existing = categoryManager.getCategoryBySlug(slug);
-    if (existing && existing.id !== id) {
-      showNotification('Ya existe una categoría con ese slug', 'error');
-      return;
-    }
-
-    const categoryData = { name, slug, icon, active };
-
-    if (id) {
-      categoryManager.updateCategory(id, categoryData);
-      showNotification('Categoría actualizada exitosamente', 'success');
-    } else {
-      categoryManager.addCategory(categoryData);
-      showNotification('Categoría agregada exitosamente', 'success');
-    }
-
-    document.getElementById('category-form').style.display = 'none';
-    this.loadCategoriesList();
-    this.updateCategorySelect();
-  }
-
-  editCategory(id) {
-    const category = categoryManager.getCategoryById(id);
-    if (category) {
-      this.showAddCategoryForm(category);
+      
+      console.log(`✅ Productos con poco stock cargados: ${lowStockProducts.length}`);
+      
+    } catch (error) {
+      console.error('❌ Error cargando productos con poco stock:', error);
     }
   }
 
-  deleteCategory(id) {
-    const result = categoryManager.deleteCategory(id);
-    if (result.success) {
-      this.loadCategoriesList();
-      this.updateCategorySelect();
-      showNotification('Categoría eliminada', 'success');
-    } else {
-      showNotification(result.message, 'error');
-    }
-  }
+  async loadOrdersList(statusFilter = 'all') {
+    const ordersList = document.getElementById('admin-orders-list');
+    if (!ordersList) return;
 
-  updateCategorySelect() {
-    const select = document.getElementById('product-category');
-    if (!select) return;
-
-    const currentValue = select.value;
-    select.innerHTML = '<option value="">Seleccione una categoría</option>';
+    let orders = orderManager?.orders || [];
     
-    categoryManager.getActiveCategories().forEach(category => {
-      const option = document.createElement('option');
-      option.value = category.slug;
-      option.textContent = `${category.icon || ''} ${category.name}`;
-      select.appendChild(option);
-    });
-
-    if (currentValue) {
-      select.value = currentValue;
+    // Si no hay órdenes reales, usar las de ejemplo
+    if (orders.length === 0) {
+      console.log('📊 No hay órdenes reales, usando datos de ejemplo...');
+      orders = this.getExampleOrders();
     }
-  }
+    
+    console.log('🔍 Filtrando órdenes por estado:', statusFilter);
+    console.log('📊 Órdenes antes de filtrar:', orders.length);
+    console.log('📋 Estados disponibles:', orders.map(o => o.status).join(', '));
+    
+    // Aplicar filtro
+    let filteredOrders = orders;
+    if (statusFilter !== 'all') {
+      filteredOrders = orders.filter(order => {
+        const matches = order.status === statusFilter;
+        if (matches) {
+          console.log(`✅ Orden #${order.orderNumber} (${order.status}) coincide con filtro ${statusFilter}`);
+        }
+        return matches;
+      });
+    }
+    
+    console.log('📊 Órdenes después de filtrar:', filteredOrders.length);
 
-  // ===== GESTIÓN DE PRODUCTOS =====
-  loadProductsList() {
-    const list = document.getElementById('admin-products-list');
-    if (!list) return;
-
-    const products = productManager.products;
-    list.innerHTML = '';
-
-    if (products.length === 0) {
-      list.innerHTML = '<p class="empty-state">No hay productos registrados. Agrega categorías primero.</p>';
+    if (filteredOrders.length === 0) {
+      ordersList.innerHTML = `<p style="text-align: center; color: #666; font-style: italic; padding: 2rem;">No hay órdenes con estado: <strong>${statusFilter === 'all' ? 'Todos' : statusFilter}</strong></p>`;
+      this.updateOrdersStats(filteredOrders);
       return;
     }
 
-    products.forEach((product) => {
-      const category = categoryManager.getCategoryBySlug(product.category);
-      const item = document.createElement('div');
-      item.className = `admin-product-item ${!product.available ? 'unavailable' : ''}`;
-      item.innerHTML = `
-        <div class="admin-product-info">
-          <img src="${product.image}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
-          <div>
+    ordersList.innerHTML = filteredOrders.map(order => `
+      <div class="admin-order-item">
+        <div class="order-info">
+          <h4>Orden #${order.orderNumber || order.order_number || order.id}</h4>
+          <p><strong>Cliente:</strong> ${order.customer_info?.name || order.customerInfo?.name || 'No especificado'}</p>
+          <p><strong>Total:</strong> $${(order.total || 0).toLocaleString('es-CO')}</p>
+          <p><strong>Estado:</strong> <span class="status ${order.status}">${order.status}</span></p>
+        </div>
+        <div class="order-actions">
+          <button onclick="adminPanel.viewOrder('${order.id}')" class="btn btn-info">Ver</button>
+          <button onclick="adminPanel.changeOrderStatus('${order.id}')" class="btn btn-warning">Cambiar Estado</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Actualizar estadísticas de órdenes (usar las órdenes filtradas)
+    this.updateOrdersStats(filteredOrders);
+  }
+
+  updateOrdersStats(orders = null) {
+    // Si no se pasan órdenes, obtener las actuales
+    if (!orders) {
+      orders = orderManager?.orders || [];
+      if (orders.length === 0) {
+        orders = this.getExampleOrders();
+      }
+    }
+
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+
+    // Actualizar elementos en el DOM
+    const totalEl = document.getElementById('orders-total');
+    const revenueEl = document.getElementById('orders-revenue');
+
+    if (totalEl) {
+      totalEl.textContent = totalOrders;
+    }
+
+    if (revenueEl) {
+      revenueEl.textContent = `$${totalRevenue.toLocaleString('es-CO')}`;
+    }
+
+    console.log(`📊 Estadísticas de órdenes actualizadas: ${totalOrders} órdenes, $${totalRevenue.toLocaleString('es-CO')} ingresos`);
+  }
+
+  async loadProductsList() {
+    console.log('🔄 Cargando lista de productos...');
+    const productsList = document.getElementById('admin-products-list');
+    if (!productsList) {
+      console.error('❌ Elemento admin-products-list no encontrado');
+      return;
+    }
+
+    try {
+      await productManager.initialize();
+      const products = productManager.getAvailableProducts();
+      
+      if (products.length === 0) {
+        productsList.innerHTML = '<p>No hay productos para mostrar</p>';
+        return;
+      }
+
+      productsList.innerHTML = products.map(product => `
+        <div class="admin-product-item">
+          <div class="product-status-badge ${product.available ? 'available' : 'unavailable'}">
+            ${product.available ? 'Disponible' : 'No disponible'}
+          </div>
+          <img src="${product.image || 'recursos/lunilogo.png'}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
+          <div class="product-info">
             <h4>${product.name}</h4>
-            <p><span class="category-badge">${category ? category.icon + ' ' + category.name : product.category}</span></p>
-            <p>$${product.price.toLocaleString('es-CO')} | Stock: ${product.stock} | ${product.available ? '✅ Disponible' : '❌ No disponible'}</p>
+            <div class="product-details-grid">
+              <div class="product-detail-item price">
+                <span class="label">Precio</span>
+                <span class="value">$${product.price.toLocaleString('es-CO')}</span>
+              </div>
+              <div class="product-detail-item stock ${product.stock <= 0 ? 'out' : product.stock <= 5 ? 'low' : ''}">
+                <span class="label">Stock</span>
+                <span class="value">${product.stock || 0}</span>
+              </div>
+              <div class="product-detail-item">
+                <span class="label">Categoría</span>
+                <span class="value">${this.formatCategoryName(product.category)}</span>
+              </div>
+              <div class="product-detail-item">
+                <span class="label">Color</span>
+                <span class="value">${product.color || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="product-actions">
+            <button onclick="adminPanel.editProduct('${product.id}')" class="btn btn-primary">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+            <button onclick="adminPanel.deleteProduct('${product.id}')" class="btn btn-danger">
+              <i class="fas fa-trash"></i> Eliminar
+            </button>
           </div>
         </div>
-        <div class="admin-product-actions">
-          <button onclick="adminPanel.editProduct('${product.id}')" class="btn-edit">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button onclick="adminPanel.deleteProduct('${product.id}')" class="btn-delete">
-            <i class="fas fa-trash"></i> Eliminar
-          </button>
-        </div>
-      `;
-      list.appendChild(item);
-    });
+      `).join('');
+      
+      console.log(`✅ ${products.length} productos cargados`);
+    } catch (error) {
+      console.error('❌ Error cargando productos:', error);
+      productsList.innerHTML = '<p>Error cargando productos</p>';
+    }
   }
 
-  showAddProductForm(product = null) {
-    // Verificar que haya categorías
-    if (categoryManager.getActiveCategories().length === 0) {
-      showNotification('Debes crear al menos una categoría antes de agregar productos', 'error');
-      showAdminTab('categories');
+  async loadCategoriesList() {
+    console.log('🔄 Cargando lista de categorías...');
+    const categoriesList = document.getElementById('admin-categories-list');
+    if (!categoriesList) {
+      console.error('❌ Elemento admin-categories-list no encontrado');
       return;
     }
 
-    const form = document.getElementById('product-form');
-    if (!form) return;
+    try {
+      await categoryManager.initialize();
+      const categories = categoryManager.getCategories();
+      
+      if (categories.length === 0) {
+        categoriesList.innerHTML = '<p>No hay categorías para mostrar</p>';
+        return;
+      }
 
-    this.updateCategorySelect();
+      categoriesList.innerHTML = categories.map(category => `
+        <div class="admin-category-item">
+          <div class="category-info">
+            <h4>${category.icon || '📁'} ${category.name}</h4>
+            <p><strong>Slug:</strong> ${category.slug}</p>
+            <p><strong>Estado:</strong> ${category.active ? 'Activa' : 'Inactiva'}</p>
+          </div>
+          <div class="category-actions">
+            <button onclick="adminPanel.editCategory('${category.slug}')" class="btn btn-primary">Editar</button>
+            <button onclick="adminPanel.deleteCategory('${category.slug}')" class="btn btn-danger">Eliminar</button>
+          </div>
+        </div>
+      `).join('');
+      
+      console.log(`✅ ${categories.length} categorías cargadas`);
+    } catch (error) {
+      console.error('❌ Error cargando categorías:', error);
+      categoriesList.innerHTML = '<p>Error cargando categorías</p>';
+    }
+  }
 
-    if (product) {
-      document.getElementById('product-id').value = product.id;
-      document.getElementById('product-name').value = product.name;
-      document.getElementById('product-category').value = product.category;
-      document.getElementById('product-price').value = product.price;
-      document.getElementById('product-color').value = product.color || '';
-      document.getElementById('product-size').value = product.size || '';
-      document.getElementById('product-stock').value = product.stock || 0;
-      document.getElementById('product-available').checked = product.available !== false;
-      document.getElementById('product-description').value = product.description || '';
-      document.getElementById('product-image-url').value = product.image || '';
-      document.getElementById('product-image-preview').src = product.image || 'recursos/lunilogo.png';
-      document.getElementById('form-title').textContent = 'Editar Producto';
-    } else {
-      form.reset();
-      document.getElementById('product-id').value = '';
-      document.getElementById('product-image-preview').src = 'recursos/lunilogo.png';
-      document.getElementById('form-title').textContent = 'Agregar Nuevo Producto';
+  showAddCategoryForm() {
+    const form = document.getElementById('category-form');
+    const title = document.getElementById('category-form-title');
+    const saveBtn = document.getElementById('save-category-btn');
+    
+    if (form && title && saveBtn) {
+      // Limpiar formulario
+      document.getElementById('category-id').value = '';
+      document.getElementById('category-name').value = '';
+      document.getElementById('category-slug').value = '';
+      document.getElementById('category-icon').value = '';
+      document.getElementById('category-active').checked = true;
+      
+      // Configurar para agregar
+      title.textContent = 'Agregar Nueva Categoría';
+      saveBtn.textContent = 'Guardar Categoría';
+      
+      form.style.display = 'block';
+      
+      // Auto-generar slug cuando se escriba el nombre
+      const nameInput = document.getElementById('category-name');
+      const slugInput = document.getElementById('category-slug');
+      
+      nameInput.oninput = () => {
+        const slug = nameInput.value
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim();
+        slugInput.value = slug;
+      };
+    }
+  }
+
+  async editCategory(categorySlug) {
+    console.log('✏️ Editando categoría:', categorySlug);
+    
+    try {
+      await categoryManager.initialize();
+      const category = categoryManager.getCategoryBySlug(categorySlug);
+      
+      if (!category) {
+        alert('Categoría no encontrada');
+        return;
+      }
+      
+      const form = document.getElementById('category-form');
+      const title = document.getElementById('category-form-title');
+      const saveBtn = document.getElementById('save-category-btn');
+      
+      if (form && title && saveBtn) {
+        // Llenar formulario con datos existentes
+        document.getElementById('category-id').value = category.id || '';
+        document.getElementById('category-name').value = category.name || '';
+        document.getElementById('category-slug').value = category.slug || '';
+        document.getElementById('category-icon').value = category.icon || '';
+        document.getElementById('category-active').checked = category.active !== false;
+        
+        // Configurar para editar
+        title.textContent = 'Editar Categoría';
+        saveBtn.textContent = 'Actualizar Categoría';
+        
+        form.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('❌ Error editando categoría:', error);
+      alert('Error al cargar los datos de la categoría');
+    }
+  }
+
+  async deleteCategory(categorySlug) {
+    console.log('🗑️ Eliminando categoría:', categorySlug);
+    
+    if (!confirm('¿Estás seguro de que deseas eliminar esta categoría?\n\nEsta acción no se puede deshacer.')) {
+      return;
+    }
+    
+    try {
+      await categoryManager.initialize();
+      const category = categoryManager.getCategoryBySlug(categorySlug);
+      
+      if (!category) {
+        alert('Categoría no encontrada');
+        return;
+      }
+      
+      const result = await categoryManager.deleteCategory(category.id);
+      
+      if (result.success) {
+        alert('Categoría eliminada exitosamente');
+        this.loadCategoriesList(); // Recargar lista
+      } else {
+        alert('Error al eliminar la categoría: ' + (result.message || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('❌ Error eliminando categoría:', error);
+      alert('Error al eliminar la categoría: ' + error.message);
+    }
+  }
+
+  async saveCategory() {
+    console.log('💾 Guardando categoría...');
+    
+    try {
+      const categoryId = document.getElementById('category-id').value;
+      const name = document.getElementById('category-name').value.trim();
+      const slug = document.getElementById('category-slug').value.trim();
+      const icon = document.getElementById('category-icon').value.trim();
+      const active = document.getElementById('category-active').checked;
+      
+      // Validaciones
+      if (!name) {
+        alert('El nombre de la categoría es obligatorio');
+        return;
+      }
+      
+      if (!slug) {
+        alert('El slug es obligatorio');
+        return;
+      }
+      
+      // Validar formato del slug
+      if (!/^[a-z0-9-]+$/.test(slug)) {
+        alert('El slug solo puede contener letras minúsculas, números y guiones');
+        return;
+      }
+      
+      await categoryManager.initialize();
+      
+      const categoryData = {
+        name,
+        slug,
+        icon: icon || '📁',
+        active
+      };
+      
+      let success;
+      
+      if (categoryId) {
+        // Actualizar categoría existente
+        success = await categoryManager.updateCategory(categoryId, categoryData);
+      } else {
+        // Crear nueva categoría
+        success = await categoryManager.addCategory(categoryData);
+      }
+      
+      if (success) {
+        alert(categoryId ? 'Categoría actualizada exitosamente' : 'Categoría creada exitosamente');
+        document.getElementById('category-form').style.display = 'none';
+        this.loadCategoriesList(); // Recargar lista
+      } else {
+        alert('Error al guardar la categoría');
+      }
+    } catch (error) {
+      console.error('❌ Error guardando categoría:', error);
+      alert('Error al guardar la categoría: ' + error.message);
+    }
+  }
+
+  async editProduct(productId) {
+    console.log('✏️ Editando producto:', productId);
+    
+    try {
+      await productManager.initialize();
+      const product = productManager.getProduct(productId);
+      
+      if (!product) {
+        alert('Producto no encontrado');
+        return;
+      }
+      
+      // Crear modal de edición de producto
+      this.showEditProductModal(product);
+      
+    } catch (error) {
+      console.error('❌ Error editando producto:', error);
+      alert('Error al cargar los datos del producto');
+    }
+  }
+
+  showEditProductModal(product) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = `edit-product-modal-${product.id}`;
+    
+    modal.innerHTML = `
+      <div class="modal-content edit-product-modal-content">
+        <button class="modal-close-btn" onclick="document.getElementById('edit-product-modal-${product.id}').remove()">
+          <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="edit-product-header">
+          <h2><i class="fas fa-edit"></i> Editar Producto</h2>
+          <p>Modificar información de: <strong>${product.name}</strong></p>
+        </div>
+        
+        <form class="edit-product-form">
+          <input type="hidden" id="edit-product-id" value="${product.id}">
+          
+          <div class="form-section">
+            <h4>Información Básica</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-product-name">Nombre del Producto *</label>
+                <input type="text" id="edit-product-name" value="${product.name || ''}" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-product-category">Categoría *</label>
+                <select id="edit-product-category" required>
+                  <option value="">Seleccione una categoría</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-product-price">Precio *</label>
+                <input type="number" id="edit-product-price" value="${product.price || ''}" min="0" step="100" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-product-stock">Stock Disponible</label>
+                <input type="number" id="edit-product-stock" value="${product.stock || 0}" min="0">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <h4>Características</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-product-color">Color</label>
+                <input type="text" id="edit-product-color" value="${product.color || ''}">
+              </div>
+              <div class="form-group">
+                <label for="edit-product-size">Tamaño</label>
+                <select id="edit-product-size">
+                  <option value="Pequeño" ${product.size === 'Pequeño' ? 'selected' : ''}>Pequeño</option>
+                  <option value="Mediano" ${product.size === 'Mediano' ? 'selected' : ''}>Mediano</option>
+                  <option value="Grande" ${product.size === 'Grande' ? 'selected' : ''}>Grande</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="edit-product-description">Descripción</label>
+              <textarea id="edit-product-description" rows="3">${product.description || ''}</textarea>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <h4>Imagen del Producto</h4>
+            <div class="image-upload-container">
+              <div class="image-preview-wrapper">
+                <img id="edit-product-image-preview" src="${product.image || 'recursos/lunilogo.png'}" alt="Preview" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px;">
+                <div class="upload-progress-container">
+                  <div id="edit-upload-progress" class="upload-progress"></div>
+                </div>
+              </div>
+              <div class="upload-controls">
+                <label for="edit-product-image-input" class="btn btn-upload">
+                  <i class="fas fa-cloud-upload-alt"></i> Subir Nueva Imagen
+                </label>
+                <input type="file" id="edit-product-image-input" accept="image/*" style="display: none;">
+                <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
+              </div>
+              <div class="form-group">
+                <label for="edit-product-image-url">URL de Imagen (Cloudinary)</label>
+                <input type="text" id="edit-product-image-url" value="${product.image || ''}" placeholder="Se actualizará automáticamente al subir" onchange="document.getElementById('edit-product-image-preview').src = this.value || 'recursos/lunilogo.png'">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-group">
+              <label for="edit-product-available">
+                <input type="checkbox" id="edit-product-available" ${product.available !== false ? 'checked' : ''}>
+                Producto Disponible
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" onclick="adminPanel.updateProductFromModal('${product.id}')" class="btn btn-primary">
+              <i class="fas fa-save"></i> Actualizar Producto
+            </button>
+            <button type="button" onclick="document.getElementById('edit-product-modal-${product.id}').remove()" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Cargar categorías en el select y establecer la actual
+    this.loadCategoriesInEditModal(product.category);
+    
+    // Configurar event listener para subida de imagen en modal de editar
+    const editImageInput = document.getElementById('edit-product-image-input');
+    if (editImageInput) {
+      editImageInput.addEventListener('change', (e) => this.handleEditImageUpload(e));
+    }
+  }
+
+  // ===== SUBIDA DE IMAGEN EN MODAL DE EDITAR =====
+  async handleEditImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showNotification('Error: Solo se permiten archivos de imagen (JPG, PNG, WEBP, GIF)', 'error');
+      return;
     }
 
-    form.style.display = 'block';
-    form.scrollIntoView({ behavior: 'smooth' });
+    // Validar tamaño (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.showNotification('Error: La imagen debe ser menor a 5MB', 'error');
+      return;
+    }
+
+    this.showNotification('Actualizando imagen del producto...', 'info');
+    this.showEditUploadProgress();
+
+    try {
+      // Mostrar preview inmediatamente
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById('edit-product-image-preview');
+        if (preview) {
+          preview.src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Subir a Cloudinary
+      const cloudinary = new CloudinaryUploader();
+      const result = await cloudinary.uploadImage(file);
+      
+      if (result.success) {
+        // Actualizar el campo de URL
+        const urlInput = document.getElementById('edit-product-image-url');
+        if (urlInput) {
+          urlInput.value = result.url;
+        }
+        
+        // Actualizar preview con la URL de Cloudinary
+        const preview = document.getElementById('edit-product-image-preview');
+        if (preview) {
+          preview.src = result.url;
+        }
+        
+        this.showNotification('✅ Nueva imagen cargada exitosamente', 'success');
+      } else {
+        this.showNotification('Error al subir la imagen: ' + (result.message || 'Error desconocido'), 'error');
+      }
+    } catch (error) {
+      console.error('Error en upload de edición:', error);
+      this.showNotification('Error al subir la imagen: ' + (error.message || 'Error de conexión'), 'error');
+    } finally {
+      this.hideEditUploadProgress();
+      // Limpiar el input para permitir subir la misma imagen nuevamente
+      event.target.value = '';
+    }
+  }
+
+  showEditUploadProgress() {
+    const progressContainer = document.querySelector('#edit-upload-progress')?.parentElement;
+    const progress = document.getElementById('edit-upload-progress');
+    if (progressContainer && progress) {
+      progressContainer.style.display = 'block';
+      progress.style.width = '0%';
+      
+      // Simular progreso
+      let width = 0;
+      this.editProgressInterval = setInterval(() => {
+        width += Math.random() * 15;
+        if (width >= 85) {
+          clearInterval(this.editProgressInterval);
+          progress.style.width = '85%';
+        } else {
+          progress.style.width = width + '%';
+        }
+      }, 200);
+    }
+  }
+
+  hideEditUploadProgress() {
+    if (this.editProgressInterval) {
+      clearInterval(this.editProgressInterval);
+    }
+    
+    setTimeout(() => {
+      const progressContainer = document.querySelector('#edit-upload-progress')?.parentElement;
+      const progress = document.getElementById('edit-upload-progress');
+      if (progressContainer && progress) {
+        progress.style.width = '100%';
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          progress.style.width = '0%';
+        }, 500);
+      }
+    }, 1000);
+  }
+
+  async updateProductFromModal(productId) {
+    console.log('💾 Actualizando producto desde modal:', productId);
+    
+    try {
+      const name = document.getElementById('edit-product-name')?.value?.trim();
+      const category = document.getElementById('edit-product-category')?.value;
+      const price = parseFloat(document.getElementById('edit-product-price')?.value || 0);
+      const color = document.getElementById('edit-product-color')?.value?.trim();
+      const size = document.getElementById('edit-product-size')?.value;
+      const image = document.getElementById('edit-product-image-url')?.value?.trim();
+      const stock = parseInt(document.getElementById('edit-product-stock')?.value || 0);
+      const description = document.getElementById('edit-product-description')?.value?.trim();
+      const available = document.getElementById('edit-product-available')?.checked !== false;
+      
+      // Validaciones
+      if (!name) {
+        alert('El nombre del producto es obligatorio');
+        return;
+      }
+      
+      if (!category) {
+        alert('La categoría es obligatoria');
+        return;
+      }
+      
+      if (price <= 0) {
+        alert('El precio debe ser mayor a 0');
+        return;
+      }
+      
+      await productManager.initialize();
+      
+      const productData = {
+        name,
+        category,
+        price,
+        color: color || 'Variado',
+        size: size || 'Mediano',
+        image: image || 'recursos/lunilogo.png',
+        stock,
+        description: description || '',
+        available
+      };
+      
+      const success = await productManager.updateProduct(productId, productData);
+      
+      if (success) {
+        this.showNotification('✅ Producto actualizado exitosamente', 'success');
+        document.getElementById(`edit-product-modal-${productId}`).remove();
+        this.loadProductsList(); // Recargar lista
+      } else {
+        this.showNotification('❌ Error al actualizar el producto', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error actualizando producto:', error);
+      alert('Error al actualizar el producto: ' + error.message);
+    }
+  }
+  
+  async loadCategoriesInEditModal(currentCategory = '') {
+    try {
+      await categoryManager.initialize();
+      const categories = categoryManager.getCategories();
+      const select = document.getElementById('edit-product-category');
+      
+      if (select && categories.length > 0) {
+        // Limpiar opciones existentes excepto la primera
+        select.innerHTML = '<option value="">Seleccione una categoría</option>';
+        
+        // Agregar categorías
+        categories.forEach(category => {
+          if (category.active) {
+            const option = document.createElement('option');
+            option.value = category.slug;
+            option.textContent = category.name;
+            if (category.slug === currentCategory) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error cargando categorías en modal:', error);
+    }
+  }
+
+  // ===== SUBIDA DE IMAGEN EN MODAL DE EDITAR =====
+  async handleEditImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showNotification('Error: Solo se permiten archivos de imagen (JPG, PNG, WEBP, GIF)', 'error');
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.showNotification('Error: La imagen debe ser menor a 5MB', 'error');
+      return;
+    }
+
+    this.showNotification('Actualizando imagen del producto...', 'info');
+    this.showEditUploadProgress();
+
+    try {
+      // Mostrar preview inmediatamente
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById('edit-product-image-preview');
+        if (preview) {
+          preview.src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Subir a Cloudinary
+      const cloudinary = new CloudinaryUploader();
+      const result = await cloudinary.uploadImage(file);
+      
+      if (result.success) {
+        // Actualizar el campo de URL
+        const urlInput = document.getElementById('edit-product-image-url');
+        if (urlInput) {
+          urlInput.value = result.url;
+        }
+        
+        // Actualizar preview con la URL de Cloudinary
+        const preview = document.getElementById('edit-product-image-preview');
+        if (preview) {
+          preview.src = result.url;
+        }
+        
+        this.showNotification('✅ Nueva imagen cargada exitosamente', 'success');
+      } else {
+        this.showNotification('Error al subir la imagen: ' + (result.message || 'Error desconocido'), 'error');
+      }
+    } catch (error) {
+      console.error('Error en upload de edición:', error);
+      this.showNotification('Error al subir la imagen: ' + (error.message || 'Error de conexión'), 'error');
+    } finally {
+      this.hideEditUploadProgress();
+      // Limpiar el input para permitir subir la misma imagen nuevamente
+      event.target.value = '';
+    }
+  }
+
+  showEditUploadProgress() {
+    const progressContainer = document.querySelector('#edit-upload-progress')?.parentElement;
+    const progress = document.getElementById('edit-upload-progress');
+    if (progressContainer && progress) {
+      progressContainer.style.display = 'block';
+      progress.style.width = '0%';
+      
+      // Simular progreso
+      let width = 0;
+      this.editProgressInterval = setInterval(() => {
+        width += Math.random() * 15;
+        if (width >= 85) {
+          clearInterval(this.editProgressInterval);
+          progress.style.width = '85%';
+        } else {
+          progress.style.width = width + '%';
+        }
+      }, 200);
+    }
+  }
+
+  hideEditUploadProgress() {
+    if (this.editProgressInterval) {
+      clearInterval(this.editProgressInterval);
+    }
+    
+    setTimeout(() => {
+      const progressContainer = document.querySelector('#edit-upload-progress')?.parentElement;
+      const progress = document.getElementById('edit-upload-progress');
+      if (progressContainer && progress) {
+        progress.style.width = '100%';
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          progress.style.width = '0%';
+        }, 500);
+      }
+    }, 1000);
+  }
+
+  async deleteProduct(productId) {
+    console.log('🗑️ Eliminando producto:', productId);
+    
+    if (!confirm('¿Estás seguro de que deseas eliminar este producto?\n\nEsta acción no se puede deshacer.')) {
+      return;
+    }
+    
+    try {
+      await productManager.initialize();
+      const product = productManager.getProduct(productId);
+      
+      if (!product) {
+        alert('Producto no encontrado');
+        return;
+      }
+      
+      const success = await productManager.deleteProduct(productId);
+      
+      if (success) {
+        this.showNotification('✅ Producto eliminado exitosamente', 'success');
+        this.loadProductsList(); // Recargar lista
+      } else {
+        this.showNotification('❌ Error al eliminar el producto', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error eliminando producto:', error);
+      alert('Error al eliminar el producto: ' + error.message);
+    }
+  }
+
+  resetProductForm() {
+    // Función para resetear el formulario de producto
+    const fields = [
+      'product-id', 'product-name', 'product-category', 'product-price', 
+      'product-color', 'product-image-url', 'product-stock', 'product-description'
+    ];
+    
+    fields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.value = '';
+      }
+    });
+    
+    // Resetear campos especiales
+    const sizeField = document.getElementById('product-size');
+    if (sizeField) sizeField.value = 'Mediano';
+    
+    const availableField = document.getElementById('product-available');
+    if (availableField) availableField.checked = true;
+    
+    // Resetear vista previa de imagen
+    const imagePreview = document.getElementById('product-image-preview');
+    if (imagePreview) {
+      imagePreview.src = 'recursos/lunilogo.png';
+    }
+    
+    // Restaurar título y botón
+    const formTitle = document.getElementById('form-title');
+    const saveBtn = document.getElementById('save-product-btn');
+    
+    if (formTitle) {
+      formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Agregar Nuevo Producto';
+    }
+    
+    if (saveBtn) {
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Producto';
+    }
+  }
+
+  async saveProduct() {
+    console.log('💾 Guardando producto...');
+    
+    try {
+      const productId = document.getElementById('product-id')?.value;
+      const name = document.getElementById('product-name')?.value?.trim();
+      const category = document.getElementById('product-category')?.value;
+      const price = parseFloat(document.getElementById('product-price')?.value || 0);
+      const color = document.getElementById('product-color')?.value?.trim();
+      const size = document.getElementById('product-size')?.value;
+      const image = document.getElementById('product-image-url')?.value?.trim();
+      const stock = parseInt(document.getElementById('product-stock')?.value || 0);
+      const description = document.getElementById('product-description')?.value?.trim();
+      const available = document.getElementById('product-available')?.checked !== false;
+      
+      // Validaciones
+      if (!name) {
+        alert('El nombre del producto es obligatorio');
+        return;
+      }
+      
+      if (!category) {
+        alert('La categoría es obligatoria');
+        return;
+      }
+      
+      if (price <= 0) {
+        alert('El precio debe ser mayor a 0');
+        return;
+      }
+      
+      await productManager.initialize();
+      
+      const productData = {
+        name,
+        category,
+        price,
+        color: color || 'Variado',
+        size: size || 'Mediano',
+        image: image || 'recursos/lunilogo.png',
+        stock,
+        description: description || '',
+        available
+      };
+      
+      let success;
+      
+      if (productId) {
+        // Actualizar producto existente
+        success = await productManager.updateProduct(productId, productData);
+      } else {
+        // Crear nuevo producto
+        success = await productManager.addProduct(productData);
+      }
+      
+      if (success) {
+        const message = productId ? '✅ Producto actualizado exitosamente' : '✅ Producto creado exitosamente';
+        this.showNotification(message, 'success');
+        this.resetProductForm();
+        this.loadProductsList(); // Recargar lista
+        showAdminTab('products'); // Volver a la lista
+      } else {
+        this.showNotification('❌ Error al guardar el producto', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error guardando producto:', error);
+      alert('Error al guardar el producto: ' + error.message);
+    }
+  }
+
+  cancelProductForm() {
+    this.resetProductForm();
+    showAdminTab('products'); // Volver a la lista de productos
   }
 
   async handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-
-    const validation = cloudinaryUploader.validateFile(file);
-    if (!validation.valid) {
-      showNotification(validation.message, 'error');
+    
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showNotification('Error: Solo se permiten archivos de imagen (JPG, PNG, WEBP, GIF)', 'error');
       return;
     }
-
-    const preview = document.getElementById('product-image-preview');
-    const progressBar = document.getElementById('upload-progress');
-    const uploadBtn = document.getElementById('upload-image-btn');
-
-    // Mostrar preview local
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-
-    // Subir a Cloudinary
-    if (uploadBtn) uploadBtn.disabled = true;
-    if (progressBar) progressBar.style.display = 'block';
-
+    
+    // Validar tamaño (5MB máx)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      this.showNotification('Error: La imagen debe ser menor a 5MB', 'error');
+      return;
+    }
+    
     try {
-      const result = await cloudinaryUploader.uploadImageWithProgress(file, (progress) => {
-        if (progressBar) {
-          progressBar.style.width = progress + '%';
-        }
-      });
-
+      this.showNotification('Subiendo imagen...', 'info');
+      this.showUploadProgress(0);
+      
+      // Inicializar Cloudinary uploader
+      const cloudinary = new CloudinaryUploader();
+      
+      // Simular progreso durante la subida
+      const progressInterval = setInterval(() => {
+        const progress = Math.min(90, Math.random() * 80 + 10);
+        this.showUploadProgress(progress);
+      }, 200);
+      
+      const result = await cloudinary.uploadImage(file);
+      
+      clearInterval(progressInterval);
+      this.showUploadProgress(100);
+      
       if (result.success) {
-        document.getElementById('product-image-url').value = result.url;
-        preview.src = result.url;
-        showNotification('Imagen subida exitosamente', 'success');
+        // Actualizar preview de imagen
+        const preview = document.getElementById('product-image-preview');
+        const urlInput = document.getElementById('product-image-url');
+        
+        if (preview) {
+          preview.src = result.url;
+        }
+        
+        if (urlInput) {
+          urlInput.value = result.url;
+        }
+        
+        setTimeout(() => {
+          this.hideUploadProgress();
+          this.showNotification('✅ Imagen subida exitosamente', 'success');
+        }, 500);
+      } else {
+        this.hideUploadProgress();
+        this.showNotification('Error al subir la imagen: ' + (result.message || 'Error desconocido'), 'error');
       }
     } catch (error) {
-      showNotification(error.message || 'Error al subir la imagen', 'error');
-    } finally {
-      if (uploadBtn) uploadBtn.disabled = false;
-      if (progressBar) {
-        progressBar.style.display = 'none';
-        progressBar.style.width = '0%';
-      }
+      this.hideUploadProgress();
+      console.error('❌ Error subiendo imagen:', error);
+      this.showNotification('Error al subir la imagen: ' + (error.message || 'Error de conexión'), 'error');
     }
   }
 
-  saveProduct() {
-    const id = document.getElementById('product-id').value;
-    const name = document.getElementById('product-name').value;
-    const category = document.getElementById('product-category').value;
-    const price = parseFloat(document.getElementById('product-price').value);
-    const color = document.getElementById('product-color').value;
-    const size = document.getElementById('product-size').value;
-    const stock = parseInt(document.getElementById('product-stock').value) || 0;
-    const available = document.getElementById('product-available').checked;
-    const description = document.getElementById('product-description').value;
-    const image = document.getElementById('product-image-url').value;
-
-    if (!name || !category || !price || price <= 0) {
-      showNotification('Por favor complete todos los campos requeridos', 'error');
-      return;
-    }
-
-    // Verificar que la categoría existe
-    const categoryObj = categoryManager.getCategoryBySlug(category);
-    if (!categoryObj) {
-      showNotification('La categoría seleccionada no existe', 'error');
-      return;
-    }
-
-    const productData = {
-      name,
-      category,
-      price,
-      color,
-      size,
-      stock,
-      available,
-      description,
-      image: image || 'recursos/lunilogo.png'
-    };
-
-    if (id) {
-      productManager.updateProduct(id, productData);
-      showNotification('Producto actualizado exitosamente', 'success');
-    } else {
-      productManager.addProduct(productData);
-      showNotification('Producto agregado exitosamente', 'success');
-    }
-
-    document.getElementById('product-form').style.display = 'none';
-    this.loadProductsList();
-    if (window.renderProductCatalog) {
-      window.renderProductCatalog();
-    }
-  }
-
-  editProduct(id) {
-    const product = productManager.getProduct(id);
-    if (product) {
-      this.showAddProductForm(product);
-    }
-  }
-
-  deleteProduct(id) {
-    if (confirm('¿Está seguro de eliminar este producto?')) {
-      productManager.deleteProduct(id);
-      this.loadProductsList();
-      if (window.renderProductCatalog) {
-        window.renderProductCatalog();
-      }
-      showNotification('Producto eliminado', 'success');
-    }
-  }
-
-  // ===== GESTIÓN DE PEDIDOS =====
-  loadOrdersList(status = 'all') {
-    const list = document.getElementById('admin-orders-list');
-    if (!list) return;
-
-    const orders = orderManager.getOrdersByStatus(status);
-    list.innerHTML = '';
-
-    if (orders.length === 0) {
-      list.innerHTML = '<p class="empty-state">No hay pedidos registrados</p>';
-      return;
-    }
-
-    orders.forEach((order) => {
-      const date = new Date(order.createdAt);
-      const formattedDate = date.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      const item = document.createElement('div');
-      item.className = `admin-order-item status-${order.status}`;
-      item.innerHTML = `
-        <div class="order-header-info">
-          <div class="order-main-info">
-            <h4>${order.orderNumber}</h4>
-            <p class="order-customer">👤 ${order.customerInfo.name}</p>
-            <p class="order-date">📅 ${formattedDate}</p>
-          </div>
-          <div class="order-status-badge status-${order.status}">
-            ${this.getStatusLabel(order.status)}
-          </div>
-        </div>
-        <div class="order-details">
-          <div class="order-items-summary">
-            <p><strong>${order.items.length}</strong> producto(s) | Total: <strong>$${order.total.toLocaleString('es-CO')}</strong></p>
-          </div>
-          <div class="order-actions">
-            <button onclick="adminPanel.viewOrder('${order.id}')" class="btn-view">
-              <i class="fas fa-eye"></i> Ver Detalles
-            </button>
-            <select onchange="adminPanel.changeOrderStatus('${order.id}', this.value)" class="status-select">
-              <option value="pendiente" ${order.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-              <option value="confirmado" ${order.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-              <option value="en_preparacion" ${order.status === 'en_preparacion' ? 'selected' : ''}>En Preparación</option>
-              <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
-              <option value="entregado" ${order.status === 'entregado' ? 'selected' : ''}>Entregado</option>
-              <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-            </select>
-            ${order.status === 'confirmado' || order.status === 'en_preparacion' ? `
-            <button onclick="adminPanel.sendInvoice('${order.id}')" class="btn-invoice" ${order.invoiceSent ? 'disabled' : ''}>
-              <i class="fas fa-file-invoice"></i> ${order.invoiceSent ? 'Factura Enviada' : 'Enviar Factura'}
-            </button>
-            ` : ''}
-          </div>
-        </div>
-      `;
-      list.appendChild(item);
-    });
-  }
-
-  updateOrdersStats() {
-    const stats = orderManager.getOrdersStats();
-    const totalEl = document.getElementById('orders-total');
-    const revenueEl = document.getElementById('orders-revenue');
+  showUploadProgress(percentage) {
+    const progressContainer = document.querySelector('.upload-progress-container');
+    const progressBar = document.getElementById('upload-progress');
     
-    if (totalEl) totalEl.textContent = stats.total;
-    if (revenueEl) revenueEl.textContent = `$${stats.totalRevenue.toLocaleString('es-CO')}`;
-  }
-
-  getStatusLabel(status) {
-    const labels = {
-      'pendiente': '⏳ Pendiente',
-      'confirmado': '✅ Confirmado',
-      'en_preparacion': '📦 En Preparación',
-      'enviado': '🚚 Enviado',
-      'entregado': '🎉 Entregado',
-      'cancelado': '❌ Cancelado'
-    };
-    return labels[status] || status;
-  }
-
-  changeOrderStatus(orderId, newStatus) {
-    const order = orderManager.updateOrderStatus(orderId, newStatus);
-    if (order) {
-      this.loadOrdersList();
-      this.updateOrdersStats();
-      
-      // Actualizar dashboard si está activo
-      const dashboardTab = document.getElementById('admin-dashboard-tab');
-      if (dashboardTab && dashboardTab.classList.contains('active')) {
-        this.loadDashboard();
-      }
-      
-      showNotification(`Estado actualizado a: ${this.getStatusLabel(newStatus)}`, 'success');
+    if (progressContainer) {
+      progressContainer.style.display = 'block';
     }
+    
+    if (progressBar) {
+      progressBar.style.width = percentage + '%';
+    }
+  }
+
+  hideUploadProgress() {
+    const progressContainer = document.querySelector('.upload-progress-container');
+    if (progressContainer) {
+      progressContainer.style.display = 'none';
+    }
+  }
+
+  showNotification(message, type = 'info') {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `admin-notification ${type}`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+      </div>
+      <button class="notification-close" onclick="this.parentElement.remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
+    
+    // Mostrar con animación
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 100);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 300);
+    }, 5000);
+  }
+
+  closeAdminPanel() {
+    console.log('🚪 Cerrando panel de administración...');
+    
+    // Obtener el modal del admin
+    const adminModal = document.getElementById('admin-modal');
+    if (adminModal) {
+      adminModal.style.display = 'none';
+      console.log('✅ Panel de administración cerrado');
+    } else {
+      console.warn('⚠️ Modal de admin no encontrado');
+    }
+  }
+
+  // Formatear nombres de categorías
+  formatCategoryName(category) {
+    const categoryNames = {
+      'ganchitos': 'Ganchitos',
+      'fruticas': 'Fruticas', 
+      'animalitos': 'Animalitos',
+      'naturales': 'Naturales',
+      'pinzasclasicas': 'Pinzas Clásicas',
+      'floresmedianas': 'Flores Medianas',
+      'floresmini': 'Flores Mini',
+      'sets': 'Sets'
+    };
+    return categoryNames[category] || category;
+  }
+
+  async loadCategoriesInSelect() {
+    try {
+      await categoryManager.initialize();
+      const categories = categoryManager.getActiveCategories();
+      const categorySelect = document.getElementById('product-category');
+      
+      if (categorySelect) {
+        // Mantener la opción por defecto
+        categorySelect.innerHTML = '<option value="">Seleccione una categoría</option>';
+        
+        // Agregar categorías
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.slug;
+          option.textContent = `${category.icon || '📁'} ${category.name}`;
+          categorySelect.appendChild(option);
+        });
+        
+        console.log(`✅ ${categories.length} categorías cargadas en select`);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando categorías en select:', error);
+    }
+  }
+
+  // ===== DATOS DE EJEMPLO CENTRALIZADOS =====
+  getExampleOrders() {
+    return [
+      { 
+        id: 1, 
+        orderNumber: 'ORD-000001',
+        total: 2850000, 
+        status: 'completed', 
+        date: new Date(Date.now() - 86400000),
+        customer_info: {
+          name: 'María González',
+          email: 'maria@email.com',
+          phone: '3001234567',
+          address: 'Calle 123 #45-67, Bogotá'
+        },
+        items: [
+          { productName: 'Silla Ejecutiva Premium', quantity: 1, price: 2850000 }
+        ]
+      },
+      { 
+        id: 2, 
+        orderNumber: 'ORD-000002',
+        total: 1250000, 
+        status: 'pending', 
+        date: new Date(Date.now() - 172800000),
+        customer_info: {
+          name: 'Carlos Rodríguez',
+          email: 'carlos@email.com',
+          phone: '3009876543',
+          address: 'Carrera 50 #20-30, Medellín'
+        },
+        items: [
+          { productName: 'Silla de Oficina Básica', quantity: 2, price: 625000 }
+        ]
+      },
+      { 
+        id: 3, 
+        orderNumber: 'ORD-000003',
+        total: 3450000, 
+        status: 'confirmed', 
+        date: new Date(Date.now() - 259200000),
+        customer_info: {
+          name: 'Ana Jiménez',
+          email: 'ana@email.com',
+          phone: '3005555555',
+          address: 'Avenida 15 #80-25, Cali'
+        },
+        items: [
+          { productName: 'Set de Sillas de Reunión', quantity: 1, price: 3450000 }
+        ]
+      },
+      { 
+        id: 4, 
+        orderNumber: 'ORD-000004',
+        total: 890000, 
+        status: 'shipped', 
+        date: new Date(Date.now() - 345600000),
+        customer_info: {
+          name: 'Luis Martínez',
+          email: 'luis@email.com',
+          phone: '3007777777',
+          address: 'Calle 70 #11-50, Barranquilla'
+        },
+        items: [
+          { productName: 'Silla Ergonómica', quantity: 1, price: 890000 }
+        ]
+      },
+      { 
+        id: 5, 
+        orderNumber: 'ORD-000005',
+        total: 1750000, 
+        status: 'preparing', 
+        date: new Date(Date.now() - 432000000),
+        customer_info: {
+          name: 'Sandra Pérez',
+          email: 'sandra@email.com',
+          phone: '3008888888',
+          address: 'Transversal 25 #60-40, Bucaramanga'
+        },
+        items: [
+          { productName: 'Silla Gaming Pro', quantity: 1, price: 1750000 }
+        ]
+      },
+      { 
+        id: 6, 
+        orderNumber: 'ORD-000006',
+        total: 650000, 
+        status: 'cancelled', 
+        date: new Date(Date.now() - 518400000),
+        customer_info: {
+          name: 'Roberto Silva',
+          email: 'roberto@email.com',
+          phone: '3001111111',
+          address: 'Diagonal 30 #12-34, Pereira'
+        },
+        items: [
+          { productName: 'Silla Básica', quantity: 1, price: 650000 }
+        ]
+      },
+      { 
+        id: 7, 
+        orderNumber: 'ORD-000007',
+        total: 4200000, 
+        status: 'delivered', 
+        date: new Date(Date.now() - 604800000),
+        customer_info: {
+          name: 'Patricia Morales',
+          email: 'patricia@email.com',
+          phone: '3002222222',
+          address: 'Carrera 80 #25-50, Cartagena'
+        },
+        items: [
+          { productName: 'Silla Ejecutiva Deluxe', quantity: 1, price: 4200000 }
+        ]
+      }
+    ];
+  }
+  getOrderById(orderId) {
+    let orders = orderManager?.orders || [];
+    
+    // Si no hay órdenes reales, usar las de ejemplo
+    if (orders.length === 0) {
+      orders = this.getExampleOrders();
+    }
+    
+    return orders.find(o => o.id === orderId || o.id === parseInt(orderId));
   }
 
   viewOrder(orderId) {
-    const order = orderManager.getOrder(orderId);
-    if (!order) return;
+    console.log('🔍 Viendo orden:', orderId);
+    
+    const order = this.getOrderById(orderId);
+    
+    if (!order) {
+      alert('Orden no encontrada');
+      return;
+    }
 
+    // Crear modal con detalles de la orden
     const modal = document.createElement('div');
     modal.className = 'modal';
-    modal.id = 'order-detail-modal';
+    modal.style.display = 'flex';
     modal.innerHTML = `
-      <div class="modal-content order-detail-content">
-        <button class="modal-close-btn" onclick="this.closest('.modal').remove()">
+      <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <button class="modal-close-btn" onclick="this.parentElement.parentElement.remove()">
           <i class="fas fa-times"></i>
         </button>
-        <h2>Detalles del Pedido: ${order.orderNumber}</h2>
-        <div class="order-detail-info">
-          <div class="detail-section">
-            <h3>💝 Cliente</h3>
-            <p><strong>Nombre:</strong> ${order.customerInfo.name}</p>
-            <p><strong>Teléfono:</strong> ${order.customerInfo.phone}</p>
-            ${order.customerInfo.email ? `<p><strong>Email:</strong> ${order.customerInfo.email}</p>` : ''}
-            <p><strong>Dirección:</strong> ${order.customerInfo.address}</p>
-            <p><strong>Ciudad:</strong> ${order.customerInfo.city}</p>
+        <div class="order-detail-header">
+          <h2><i class="fas fa-shopping-bag"></i> Detalle de Orden #${order.orderNumber || order.id}</h2>
+        </div>
+        <div class="order-detail-content">
+          <div class="order-info-section">
+            <h3><i class="fas fa-user"></i> Información del Cliente</h3>
+            <p><strong>Nombre:</strong> ${order.customer_info?.name || order.customerInfo?.name || 'No especificado'}</p>
+            <p><strong>Email:</strong> ${order.customer_info?.email || order.customerInfo?.email || 'No especificado'}</p>
+            <p><strong>Teléfono:</strong> ${order.customer_info?.phone || order.customerInfo?.phone || 'No especificado'}</p>
+            <p><strong>Dirección:</strong> ${order.customer_info?.address || order.customerInfo?.address || 'No especificado'}</p>
           </div>
-          <div class="detail-section">
-            <h3>🛍️ Productos</h3>
-            ${order.items.map(item => `
-              <div class="detail-item">
-                <p><strong>${item.productName}</strong></p>
-                ${item.color ? `<p>Color: ${item.color}</p>` : ''}
-                ${item.size ? `<p>Tamaño: ${item.size}</p>` : ''}
-                <p>Cantidad: ${item.quantity} x $${item.price.toLocaleString('es-CO')} = $${item.subtotal.toLocaleString('es-CO')}</p>
+          
+          <div class="order-status-section">
+            <h3><i class="fas fa-flag"></i> Estado de la Orden</h3>
+            <p><strong>Estado Actual:</strong> <span class="status ${order.status}">${order.status}</span></p>
+            <p><strong>Fecha:</strong> ${order.date ? new Date(order.date).toLocaleDateString('es-CO') : order.created_at ? new Date(order.created_at).toLocaleDateString('es-CO') : 'No especificada'}</p>
+            <p><strong>Total:</strong> <strong style="color: var(--primary-color);">$${(order.total || 0).toLocaleString('es-CO')}</strong></p>
+          </div>
+          
+          ${order.items ? `
+            <div class="order-products-section">
+              <h3><i class="fas fa-box"></i> Productos</h3>
+              <div class="order-products-list">
+                ${order.items.map(item => `
+                  <div class="order-product-item">
+                    <div class="product-info">
+                      <h4>${item.productName || item.name || 'Producto sin nombre'}</h4>
+                      <p>Cantidad: ${item.quantity || 1}</p>
+                      <p>Precio: $${(item.price || 0).toLocaleString('es-CO')}</p>
+                    </div>
+                    <div class="product-total">
+                      <strong>$${((item.price || 0) * (item.quantity || 1)).toLocaleString('es-CO')}</strong>
+                    </div>
+                  </div>
+                `).join('')}
               </div>
-            `).join('')}
-          </div>
-          <div class="detail-section">
-            <h3>💰 Total</h3>
-            <p class="total-amount">$${order.total.toLocaleString('es-CO')}</p>
-          </div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="order-detail-actions">
+          <button onclick="adminPanel.changeOrderStatus('${order.id}')" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Cambiar Estado
+          </button>
+          ${order.status !== 'pending' && order.status !== 'cancelled' ? `
+          <button onclick="adminPanel.showInvoiceOptions('${order.id}')" class="btn btn-success">
+            <i class="fas fa-file-invoice-dollar"></i> Enviar Factura
+          </button>` : ''}
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
         </div>
       </div>
     `;
+    
     document.body.appendChild(modal);
-    modal.style.display = 'flex';
   }
 
-  async sendInvoice(orderId) {
-    const order = orderManager.getOrder(orderId);
-    if (!order) return;
+  changeOrderStatus(orderId) {
+    console.log('🔄 Cambiando estado de orden:', orderId);
+    
+    const order = this.getOrderById(orderId);
+    
+    if (!order) {
+      alert('Orden no encontrada');
+      return;
+    }
 
-    if (confirm('¿Deseas enviar la factura por WhatsApp al cliente?')) {
-      const invoiceUrl = await invoiceGenerator.sendInvoiceByWhatsApp(order);
-      window.open(invoiceUrl, '_blank');
+    // Crear modal para cambiar estado
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 500px;">
+        <button class="modal-close-btn" onclick="this.parentElement.parentElement.remove()">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="status-change-header">
+          <h2><i class="fas fa-edit"></i> Cambiar Estado</h2>
+          <p>Orden #${order.orderNumber || order.id}</p>
+        </div>
+        <div class="status-change-content">
+          <div class="form-group">
+            <label for="new-status">Nuevo Estado:</label>
+            <select id="new-status" class="form-control">
+              <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pendiente</option>
+              <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmado</option>
+              <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>En Preparación</option>
+              <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Enviado</option>
+              <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Entregado</option>
+              <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
+            </select>
+          </div>
+        </div>
+        <div class="status-change-actions">
+          <button onclick="adminPanel.updateOrderStatusAndShowInvoiceOptions('${order.id}', document.getElementById('new-status').value); this.parentElement.parentElement.parentElement.remove();" class="btn btn-primary">
+            <i class="fas fa-save"></i> Actualizar Estado
+          </button>
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  }
+
+  updateOrderStatus(orderId, newStatus) {
+    console.log('💾 Actualizando estado de orden:', orderId, 'a:', newStatus);
+    
+    const orders = orderManager?.orders || [];
+    
+    // Si hay órdenes reales, actualizar la real
+    if (orders.length > 0) {
+      const orderIndex = orders.findIndex(o => o.id === orderId || o.id === parseInt(orderId));
       
-      orderManager.markInvoiceSent(orderId);
-      this.loadOrdersList();
-      
-      // Actualizar dashboard si está activo
-      const dashboardTab = document.getElementById('admin-dashboard-tab');
-      if (dashboardTab && dashboardTab.classList.contains('active')) {
-        this.loadDashboard();
+      if (orderIndex === -1) {
+        alert('Orden no encontrada');
+        return;
       }
+
+      // Actualizar el estado
+      orders[orderIndex].status = newStatus;
       
-      showNotification('✨ Factura enviada exitosamente ✨', 'success');
+      // Guardar en localStorage si orderManager lo permite
+      if (orderManager?.saveOrders) {
+        orderManager.saveOrders();
+      }
+    } else {
+      // Para órdenes de ejemplo, solo simular la actualización
+      console.log('📝 Actualizando orden de ejemplo (simulado)');
+    }
+    
+    // Actualizar la lista de órdenes
+    this.loadOrdersList();
+    
+    alert(`Estado de la orden actualizado a: ${newStatus}`);
+  }
+
+  updateOrderStatusAndShowInvoiceOptions(orderId, newStatus) {
+    console.log('💾 Actualizando estado con opciones de factura:', orderId, 'a:', newStatus);
+    
+    // Primero actualizar el estado
+    this.updateOrderStatus(orderId, newStatus);
+    
+    // Mostrar opciones de facturación para todos los estados excepto 'pending' y 'cancelled'
+    if (newStatus !== 'pending' && newStatus !== 'cancelled') {
+      this.showInvoiceOptions(orderId);
+    }
+  }
+
+  showInvoiceOptions(orderId) {
+    console.log('📋 Mostrando opciones de facturación para orden:', orderId);
+    
+    const order = this.getOrderById(orderId);
+    if (!order) {
+      console.error('❌ Orden no encontrada para facturación');
+      return;
+    }
+
+    // Crear modal con opciones de facturación
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = `invoice-modal-${orderId}`;
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 600px;">
+        <button class="modal-close-btn" onclick="document.getElementById('invoice-modal-${orderId}').remove()">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="invoice-options-header">
+          <h2><i class="fas fa-file-invoice-dollar"></i> Generar Factura</h2>
+          <p>Orden #${order.orderNumber || order.order_number || order.id} - Estado: ${order.status}</p>
+          <p><strong>Cliente:</strong> ${order.customer_info?.name || order.customerInfo?.name || 'No especificado'}</p>
+          <p><strong>Total:</strong> <span style="color: var(--primary-color); font-weight: bold;">$${(order.total || 0).toLocaleString('es-CO')}</span></p>
+        </div>
+        <div class="invoice-options-content">
+          <div class="invoice-option-card" onclick="adminPanel.generatePDFInvoice('${order.id}')">
+            <div class="option-icon pdf">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="option-info">
+              <h3>Descargar Factura PDF</h3>
+              <p>Generar y descargar la factura en formato PDF</p>
+            </div>
+            <div class="option-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          
+          <div class="invoice-option-card" onclick="adminPanel.sendWhatsAppInvoice('${order.id}')">
+            <div class="option-icon whatsapp">
+              <i class="fab fa-whatsapp"></i>
+            </div>
+            <div class="option-info">
+              <h3>Enviar por WhatsApp</h3>
+              <p>Enviar mensaje con la factura al cliente</p>
+            </div>
+            <div class="option-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+          
+          <div class="invoice-option-card" onclick="adminPanel.generatePDFInvoice('${order.id}'); adminPanel.sendWhatsAppInvoice('${order.id}');">
+            <div class="option-icon both">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="option-info">
+              <h3>PDF + WhatsApp</h3>
+              <p>Descargar PDF y enviar mensaje de WhatsApp</p>
+            </div>
+            <div class="option-arrow">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        </div>
+        <div class="invoice-options-actions">
+          <button onclick="document.getElementById('invoice-modal-${orderId}').remove()" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  }
+
+  async generatePDFInvoice(orderId) {
+    console.log('📄 Generando PDF para orden:', orderId);
+    
+    const order = this.getOrderById(orderId);
+    if (!order) {
+      alert('Orden no encontrada');
+      return;
+    }
+
+    // Normalizar datos de la orden para InvoiceGenerator
+    const normalizedOrder = {
+      orderNumber: order.orderNumber || order.order_number || order.id,
+      order_number: order.orderNumber || order.order_number || order.id,
+      createdAt: order.date || order.created_at || new Date().toISOString(),
+      created_at: order.date || order.created_at || new Date().toISOString(),
+      status: order.status || 'confirmed',
+      total: order.total || 0,
+      customerInfo: order.customer_info || order.customerInfo || {},
+      customer_info: order.customer_info || order.customerInfo || {},
+      items: order.items || [],
+      paymentMethod: order.paymentMethod || 'No especificado',
+      notes: order.notes || ''
+    };
+
+    // Asegurar que customerInfo tenga todas las propiedades
+    if (!normalizedOrder.customerInfo.city && normalizedOrder.customerInfo.address) {
+      const address = normalizedOrder.customerInfo.address;
+      if (address.includes('Bogotá')) normalizedOrder.customerInfo.city = 'Bogotá';
+      else if (address.includes('Medellín')) normalizedOrder.customerInfo.city = 'Medellín';
+      else if (address.includes('Cali')) normalizedOrder.customerInfo.city = 'Cali';
+      else if (address.includes('Barranquilla')) normalizedOrder.customerInfo.city = 'Barranquilla';
+      else if (address.includes('Bucaramanga')) normalizedOrder.customerInfo.city = 'Bucaramanga';
+      else normalizedOrder.customerInfo.city = 'Colombia';
+    }
+
+    try {
+      // Verificar que InvoiceGenerator esté disponible
+      if (typeof window.invoiceGenerator === 'undefined') {
+        console.log('🔄 InvoiceGenerator no disponible, inicializando...');
+        if (typeof window.initializeInvoiceGenerator === 'function') {
+          window.initializeInvoiceGenerator();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (window.invoiceGenerator && window.invoiceGenerator.downloadPDFInvoice) {
+        console.log('📥 Iniciando descarga de PDF...');
+        console.log('📋 Datos de la orden:', normalizedOrder);
+        await window.invoiceGenerator.downloadPDFInvoice(normalizedOrder);
+        console.log('✅ PDF generado y descargado exitosamente');
+        alert('✅ Factura PDF descargada exitosamente');
+      } else {
+        throw new Error('InvoiceGenerator no está inicializado correctamente');
+      }
+    } catch (error) {
+      console.error('❌ Error generando PDF:', error);
+      alert('❌ Error generando PDF: ' + error.message);
+    }
+  }
+
+  sendWhatsAppInvoice(orderId) {
+    console.log('📱 Enviando WhatsApp para orden:', orderId);
+    
+    const order = this.getOrderById(orderId);
+    if (!order) {
+      alert('Orden no encontrada');
+      return;
+    }
+
+    const customerPhone = order.customer_info?.phone || order.customerInfo?.phone;
+    if (!customerPhone) {
+      alert('No se encontró número de teléfono del cliente');
+      return;
+    }
+
+    // Crear mensaje de WhatsApp
+    const mensaje = `¡Hola ${order.customer_info?.name || order.customerInfo?.name || 'Cliente'}! 👋
+
+Tu orden ha sido CONFIRMADA ✅
+
+📋 *Detalles de tu pedido:*
+🆔 Orden: #${order.orderNumber || order.order_number || order.id}
+💰 Total: $${(order.total || 0).toLocaleString('es-CO')}
+
+${order.items ? order.items.map(item => 
+`• ${item.productName || item.name || 'Producto'} x${item.quantity || 1}`
+).join('\n') : ''}
+
+📱 ¡Gracias por tu compra en Luni Chairs!
+🪑 Tu silla de ensueño está en camino
+
+¿Tienes alguna pregunta? ¡Estamos aquí para ayudarte! 😊`;
+
+    // Limpiar número de teléfono
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    const whatsappPhone = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
+    
+    // Crear URL de WhatsApp
+    const whatsappURL = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(mensaje)}`;
+    
+    console.log('📱 Abriendo WhatsApp:', whatsappURL);
+    window.open(whatsappURL, '_blank');
+  }
+
+  handleAddProduct(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('product-name').value;
+    const price = parseFloat(document.getElementById('product-price').value);
+    const category = document.getElementById('product-category').value;
+    const imageFile = document.getElementById('product-image').files[0];
+
+    if (!name || !price || !category) {
+      alert('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    const product = {
+      id: Date.now().toString(),
+      name,
+      price,
+      category,
+      stock: 10, // Stock por defecto
+      image: imageFile ? URL.createObjectURL(imageFile) : 'recursos/default-product.png'
+    };
+
+    if (productManager?.addProduct) {
+      productManager.addProduct(product);
+      alert('✅ Producto agregado exitosamente');
+      e.target.reset();
+    } else {
+      alert('❌ Error al agregar producto');
     }
   }
 }
 
-// Instancia global
-const adminPanel = new AdminPanel();
-
-// Función global para cambiar tabs
+// ===== FUNCIONES GLOBALES =====
 function showAdminTab(tab) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+  console.log('🔄 Cambiando a pestaña:', tab);
   
-  if (tab === 'dashboard') {
-    document.querySelector('.admin-tab[data-tab="dashboard"]')?.classList.add('active');
-    document.getElementById('admin-dashboard-tab')?.classList.add('active');
-    adminPanel.loadDashboard();
-  } else if (tab === 'products') {
-    document.querySelector('.admin-tab[data-tab="products"]')?.classList.add('active');
-    document.getElementById('admin-products-tab')?.classList.add('active');
-    adminPanel.loadProductsList();
-  } else if (tab === 'categories') {
-    document.querySelector('.admin-tab[data-tab="categories"]')?.classList.add('active');
-    document.getElementById('admin-categories-tab')?.classList.add('active');
-    adminPanel.loadCategoriesList();
-  } else if (tab === 'add-product') {
-    document.querySelector('.admin-tab[data-tab="add-product"]')?.classList.add('active');
-    document.getElementById('admin-add-tab')?.classList.add('active');
+  // Remover clase active de todos los tabs
+  document.querySelectorAll('.admin-tab').forEach(t => {
+    t.classList.remove('active');
+    console.log('Removiendo active de:', t.dataset.tab);
+  });
+  
+  document.querySelectorAll('.admin-tab-content').forEach(c => {
+    c.classList.remove('active');
+    console.log('Ocultando contenido:', c.id);
+  });
+  
+  // Activar tab seleccionado
+  const selectedTab = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+  const selectedContent = document.getElementById(`admin-${tab}-tab`);
+  
+  console.log('Tab seleccionado:', selectedTab);
+  console.log('Contenido seleccionado:', selectedContent);
+  
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+    console.log('✅ Tab activado:', tab);
+  } else {
+    console.error('❌ No se encontró tab:', tab);
+  }
+  
+  if (selectedContent) {
+    selectedContent.classList.add('active');
+    console.log('✅ Contenido mostrado:', tab);
+  } else {
+    console.error('❌ No se encontró contenido para:', tab);
+  }
+  
+  // Actualizar menú mobile
+  if (adminPanel && adminPanel.updateMobileActiveTab) {
+    adminPanel.updateMobileActiveTab(tab);
+  }
+  
+  // Cargar contenido específico
+  if (adminPanel) {
+    switch(tab) {
+      case 'dashboard':
+        adminPanel.loadDashboard();
+        break;
+      case 'orders':
+        adminPanel.loadOrdersList();
+        break;
+      case 'products':
+        if (adminPanel.loadProductsList) adminPanel.loadProductsList();
+        break;
+      case 'categories':
+        if (adminPanel.loadCategoriesList) adminPanel.loadCategoriesList();
+        break;
+      case 'add-product':
+        // Mostrar formulario de agregar producto
+        console.log('Mostrando tab de agregar producto');
+        const productForm = document.getElementById('product-form');
+        if (productForm) {
+          productForm.style.display = 'block';
+        }
+        // Cargar categorías en el select
+        if (adminPanel.loadCategoriesInSelect) {
+          adminPanel.loadCategoriesInSelect();
+        }
+        break;
+    }
   }
 }
+
+function filterOrders(status) {
+  document.querySelectorAll('.filter-status').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.filter-status[data-status="${status}"]`)?.classList.add('active');
+  
+  if (adminPanel?.loadOrdersList) {
+    adminPanel.loadOrdersList(status);
+  }
+}
+
+// Inicializar panel de administración
+const adminPanel = new AdminPanel();
+
+// Función global para cambiar período de gráficas
+function changePeriodChart(period) {
+  console.log('📊 Cambiando período de gráfica a:', period);
+  
+  // Actualizar botones activos
+  document.querySelectorAll('.period-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[onclick="changePeriodChart('${period}')"]`)?.classList.add('active');
+  
+  // Recargar gráfica de ventas con el nuevo período
+  if (window.adminPanel) {
+    const orders = orderManager?.orders || [];
+    let effectiveOrders = orders;
+    if (orders.length === 0) {
+      effectiveOrders = window.adminPanel.getExampleOrders();
+    }
+    
+    const validOrders = effectiveOrders.filter(order => 
+      order.status !== 'pending' && order.status !== 'cancelled'
+    );
+    
+    window.adminPanel.loadSalesChart(validOrders, period);
+  }
+}
+
+// Exportar para uso global
+window.adminPanel = adminPanel;
+window.showAdminTab = showAdminTab;
+window.filterOrders = filterOrders;
+window.changePeriodChart = changePeriodChart;

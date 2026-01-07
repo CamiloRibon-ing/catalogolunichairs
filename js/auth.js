@@ -13,8 +13,8 @@ class AuthSystem {
     // Usuario por defecto
     return [{
       id: 'admin-1',
-      username: 'admin',
-      password: this.hashPassword('admin123'), // Contraseña por defecto: admin123
+      username: 'luniadmin',
+      password: this.hashPassword('PauLuna2026'), // Contraseña por defecto: admin123
       role: 'admin',
       name: 'Administrador',
       createdAt: Date.now()
