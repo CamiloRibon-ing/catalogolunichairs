@@ -96,18 +96,77 @@ class AdminPanel {
       logoutBtn.addEventListener('click', () => this.closeAdminPanel());
     }
 
-    // Configurar menú hamburguesa para tabs en mobile
-    this.setupMobileTabsMenu();
+    // Configurar menú hamburguesa solo para mobile
+    this.setupMobileMenuIfNeeded();
+  }
+
+  // Configurar menú mobile solo si es necesario
+  setupMobileMenuIfNeeded() {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      this.setupMobileTabsMenu();
+    } else {
+      // Asegurar que el HTML esté correcto en desktop
+      this.ensureDesktopTabs();
+    }
+    
+    // Agregar listener para cambios de tamaño de pantalla
+    if (!this.resizeListener) {
+      this.resizeListener = () => {
+        const currentIsMobile = window.innerWidth <= 768;
+        if (currentIsMobile) {
+          this.setupMobileTabsMenu();
+        } else {
+          this.ensureDesktopTabs();
+        }
+      };
+      window.addEventListener('resize', this.resizeListener);
+    }
+  }
+
+  // Asegurar que los tabs de desktop estén correctos
+  ensureDesktopTabs() {
+    const adminTabs = document.querySelector('.admin-tabs');
+    if (!adminTabs) return;
+    
+    // Si existe el toggle (estructura mobile), restaurar desktop
+    if (document.querySelector('.admin-tabs-toggle')) {
+      adminTabs.innerHTML = `
+        <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
+          <i class="fas fa-chart-line"></i> Dashboard
+        </button>
+        <button class="admin-tab" data-tab="orders" onclick="showAdminTab('orders')">
+          <i class="fas fa-shopping-bag"></i> Ventas
+        </button>
+        <button class="admin-tab" data-tab="categories" onclick="showAdminTab('categories')">
+          <i class="fas fa-tags"></i> Categorías
+        </button>
+        <button class="admin-tab" data-tab="products" onclick="showAdminTab('products')">
+          <i class="fas fa-box"></i> Productos
+        </button>
+        <button class="admin-tab" data-tab="add-product" onclick="showAdminTab('add-product')">
+          <i class="fas fa-plus"></i> Agregar Producto
+        </button>
+      `;
+    }
   }
 
   // Configurar menú hamburguesa para tabs en mobile
   setupMobileTabsMenu() {
-    // Crear HTML del menú hamburguesa si no existe
+    // Solo configurar menú mobile si la pantalla es pequeña
+    const isMobile = window.innerWidth <= 768;
     const adminTabs = document.querySelector('.admin-tabs');
-    if (adminTabs && !document.querySelector('.admin-tabs-toggle')) {
+    
+    if (!adminTabs) return;
+    
+    if (isMobile && !document.querySelector('.admin-tabs-toggle')) {
+      // Guardar los tabs originales
+      const originalTabs = adminTabs.querySelectorAll('.admin-tab');
       const currentActiveTab = document.querySelector('.admin-tab.active');
       const activeTabText = currentActiveTab ? currentActiveTab.textContent.trim() : 'Dashboard';
       
+      // Crear estructura mobile
       adminTabs.innerHTML = `
         <div class="admin-tabs-toggle" onclick="adminPanel.toggleMobileTabsMenu()">
           <span class="current-tab-text">${activeTabText}</span>
@@ -130,6 +189,25 @@ class AdminPanel {
             <i class="fas fa-plus"></i> Agregar Producto
           </button>
         </div>
+      `;
+    } else if (!isMobile && document.querySelector('.admin-tabs-toggle')) {
+      // Restaurar estructura desktop
+      adminTabs.innerHTML = `
+        <button class="admin-tab active" data-tab="dashboard" onclick="showAdminTab('dashboard')">
+          <i class="fas fa-chart-line"></i> Dashboard
+        </button>
+        <button class="admin-tab" data-tab="orders" onclick="showAdminTab('orders')">
+          <i class="fas fa-shopping-bag"></i> Ventas
+        </button>
+        <button class="admin-tab" data-tab="categories" onclick="showAdminTab('categories')">
+          <i class="fas fa-tags"></i> Categorías
+        </button>
+        <button class="admin-tab" data-tab="products" onclick="showAdminTab('products')">
+          <i class="fas fa-box"></i> Productos
+        </button>
+        <button class="admin-tab" data-tab="add-product" onclick="showAdminTab('add-product')">
+          <i class="fas fa-plus"></i> Agregar Producto
+        </button>
       `;
     }
   }
@@ -154,6 +232,9 @@ class AdminPanel {
 
   // Actualizar texto del tab activo en mobile
   updateMobileActiveTab(tabName) {
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return; // Solo funciona en mobile
+    
     const currentTabText = document.querySelector('.current-tab-text');
     if (currentTabText) {
       const tabNames = {
