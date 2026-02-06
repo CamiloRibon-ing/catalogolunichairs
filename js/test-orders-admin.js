@@ -15,18 +15,18 @@ async function createTestOrders() {
       items: [
         {
           productId: 'prod-test-1',
-          productName: 'Silla Ejecutiva Premium',
-          quantity: 1,
-          price: 450000,
-          color: 'Negro',
-          size: '',
-          subtotal: 450000
+          productName: 'Orquidea Rosa',
+          quantity: 2,
+          price: 6000,
+          color: 'Rosa',
+          size: 'Mediano',
+          subtotal: 12000
         }
       ],
-      subtotal: 450000,
+      subtotal: 12000,
       discount: 0,
       shipping: 0,
-      total: 450000,
+      total: 12000,
       status: 'pendiente',
       invoice_sent: false,
       invoice_sent_at: null,
@@ -45,18 +45,18 @@ async function createTestOrders() {
       items: [
         {
           productId: 'prod-test-2',
-          productName: 'Silla Gaming Pro',
-          quantity: 2,
-          price: 380000,
-          color: 'Azul',
-          size: '',
-          subtotal: 760000
+          productName: 'Set Flores Mini x3',
+          quantity: 1,
+          price: 8000,
+          color: 'Variados',
+          size: 'Mini',
+          subtotal: 8000
         }
       ],
-      subtotal: 760000,
+      subtotal: 8000,
       discount: 0,
       shipping: 0,
-      total: 760000,
+      total: 8000,
       status: 'confirmado',
       invoice_sent: false,
       invoice_sent_at: null,
@@ -75,9 +75,9 @@ async function createTestOrders() {
       items: [
         {
           productId: 'prod-test-3',
-          productName: 'Silla Ergonómica Office',
+          productName: 'Pinza Frutica Piña',
           quantity: 1,
-          price: 320000,
+          price: 15000,
           color: 'Gris',
           size: '',
           subtotal: 320000

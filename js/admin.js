@@ -551,108 +551,12 @@ class AdminPanel {
       const orders = orderManager?.orders || [];
       const products = productManager?.products || [];
       
-      // Si no hay órdenes, crear datos de ejemplo para mostrar
+      // Si no hay órdenes, mostrar estadísticas vacías
       let effectiveOrders = orders;
       if (orders.length === 0) {
-        console.log('📊 No hay órdenes, creando datos de ejemplo para estadísticas...');
-        effectiveOrders = [
-          { 
-            id: 1, 
-            orderNumber: 'ORD-000001',
-            total: 2850000, 
-            status: 'completed', 
-            date: new Date(Date.now() - 86400000),
-            customer_info: {
-              name: 'María González',
-              email: 'maria@email.com',
-              phone: '3001234567',
-              address: 'Calle 123 #45-67, Bogotá'
-            },
-            items: [
-              { productName: 'Silla Ejecutiva Premium', quantity: 1, price: 2850000 }
-            ]
-          },
-          { 
-            id: 2, 
-            orderNumber: 'ORD-000002',
-            total: 1250000, 
-            status: 'pending', 
-            date: new Date(Date.now() - 172800000),
-            customer_info: {
-              name: 'Carlos Rodríguez',
-              email: 'carlos@email.com',
-              phone: '3009876543',
-              address: 'Carrera 50 #20-30, Medellín'
-            },
-            items: [
-              { productName: 'Silla de Oficina Básica', quantity: 2, price: 625000 }
-            ]
-          },
-          { 
-            id: 3, 
-            orderNumber: 'ORD-000003',
-            total: 3450000, 
-            status: 'completed', 
-            date: new Date(Date.now() - 259200000),
-            customer_info: {
-              name: 'Ana Jiménez',
-              email: 'ana@email.com',
-              phone: '3005555555',
-              address: 'Avenida 15 #80-25, Cali'
-            },
-            items: [
-              { productName: 'Set de Sillas de Reunión', quantity: 1, price: 3450000 }
-            ]
-          },
-          { 
-            id: 4, 
-            orderNumber: 'ORD-000004',
-            total: 890000, 
-            status: 'completed', 
-            date: new Date(Date.now() - 345600000),
-            customer_info: {
-              name: 'Luis Martínez',
-              email: 'luis@email.com',
-              phone: '3007777777',
-              address: 'Calle 70 #11-50, Barranquilla'
-            },
-            items: [
-              { productName: 'Silla Ergonómica', quantity: 1, price: 890000 }
-            ]
-          },
-          { 
-            id: 5, 
-            orderNumber: 'ORD-000005',
-            total: 1750000, 
-            status: 'confirmed', 
-            date: new Date(Date.now() - 432000000),
-            customer_info: {
-              name: 'Sandra Pérez',
-              email: 'sandra@email.com',
-              phone: '3008888888',
-              address: 'Transversal 25 #60-40, Bucaramanga'
-            },
-            items: [
-              { productName: 'Silla Gaming Pro', quantity: 1, price: 1750000 }
-            ]
-          },
-          { 
-            id: 6, 
-            orderNumber: 'ORD-000006',
-            total: 950000, 
-            status: 'confirmed', 
-            date: new Date(Date.now() - 518400000),
-            customer_info: {
-              name: 'Jorge Morales',
-              email: 'jorge@email.com',
-              phone: '3009999999',
-              address: 'Calle 45 #30-15, Pereira'
-            },
-            items: [
-              { productName: 'Silla Ejecutiva Clásica', quantity: 1, price: 950000 }
-            ]
-          }
-        ];
+        console.log('📊 No hay órdenes reales, mostrando estadísticas vacías...');
+        this.showEmptyOrdersStats();
+        return;
       }
       
       // Filtrar órdenes que cuentan para estadísticas (excluir pending y cancelled)
@@ -695,10 +599,12 @@ class AdminPanel {
     try {
       const orders = orderManager?.orders || [];
       
-      // Si no hay órdenes, usar las de ejemplo
+      // Si no hay órdenes, no mostrar gráficas
       let effectiveOrders = orders;
       if (orders.length === 0) {
-        effectiveOrders = this.getExampleOrders();
+        console.log('📊 No hay órdenes para mostrar gráficas');
+        this.showEmptyCharts();
+        return;
       }
       
       // Filtrar órdenes válidas para gráficas (excluir pending y cancelled)
@@ -1037,10 +943,16 @@ class AdminPanel {
 
     let orders = orderManager?.orders || [];
     
-    // Si no hay órdenes reales, usar las de ejemplo
+    // Si no hay órdenes reales, mostrar mensaje vacío
     if (orders.length === 0) {
-      console.log('📊 No hay órdenes reales, usando datos de ejemplo...');
-      orders = this.getExampleOrders();
+      console.log('📊 No hay órdenes reales para mostrar');
+      ordersList.innerHTML = `<div class="empty-state" style="text-align: center; padding: 3rem; color: #666;">
+        <i class="fas fa-shopping-bag" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+        <h3 style="margin-bottom: 0.5rem;">No hay órdenes aún</h3>
+        <p>Las órdenes de los clientes aparecerán aquí cuando se realicen compras.</p>
+      </div>`;
+      this.updateOrdersStats([]);
+      return;
     }
     
     console.log('🔍 Filtrando órdenes por estado:', statusFilter);
@@ -1090,9 +1002,6 @@ class AdminPanel {
     // Si no se pasan órdenes, obtener las actuales
     if (!orders) {
       orders = orderManager?.orders || [];
-      if (orders.length === 0) {
-        orders = this.getExampleOrders();
-      }
     }
 
     const totalOrders = orders.length;
@@ -1111,6 +1020,53 @@ class AdminPanel {
     }
 
     console.log(`📊 Estadísticas de órdenes actualizadas: ${totalOrders} órdenes, $${totalRevenue.toLocaleString('es-CO')} ingresos`);
+  }
+
+  showEmptyOrdersStats() {
+    // Mostrar estadísticas vacías
+    const totalEl = document.getElementById('orders-total');
+    const revenueEl = document.getElementById('orders-revenue');
+    const productsCountEl = document.getElementById('products-count');
+    const categoriesCountEl = document.getElementById('categories-count');
+
+    if (totalEl) totalEl.textContent = '0';
+    if (revenueEl) revenueEl.textContent = '$0';
+    if (productsCountEl) {
+      const products = productManager?.products || [];
+      productsCountEl.textContent = products.length;
+    }
+    if (categoriesCountEl) {
+      const categories = categoryManager?.categories || [];
+      categoriesCountEl.textContent = categories.length;
+    }
+
+    console.log('📊 Mostrando estadísticas vacías - no hay órdenes');
+  }
+
+  showEmptyCharts() {
+    // Mostrar mensaje en lugar de gráficas vacías
+    const topProductsChart = document.getElementById('top-products-chart');
+    const monthlyChart = document.getElementById('monthly-sales-chart');
+
+    if (topProductsChart) {
+      topProductsChart.innerHTML = `
+        <div class="empty-chart-state">
+          <i class="fas fa-chart-bar" style="font-size: 2rem; color: #ccc; margin-bottom: 0.5rem;"></i>
+          <p>No hay datos para mostrar productos más vendidos</p>
+        </div>
+      `;
+    }
+
+    if (monthlyChart) {
+      monthlyChart.innerHTML = `
+        <div class="empty-chart-state">
+          <i class="fas fa-chart-line" style="font-size: 2rem; color: #ccc; margin-bottom: 0.5rem;"></i>
+          <p>No hay datos para mostrar ventas mensuales</p>
+        </div>
+      `;
+    }
+
+    console.log('📊 Mostrando gráficas vacías - no hay órdenes');
   }
 
   async loadProductsList() {
@@ -1671,6 +1627,12 @@ class AdminPanel {
         this.showNotification('✅ Producto actualizado exitosamente', 'success');
         document.getElementById(`edit-product-modal-${productId}`).remove();
         this.loadProductsList(); // Recargar lista
+        
+        // Actualizar catálogo principal inmediatamente para los clientes
+        if (typeof window.renderProductCatalog === 'function') {
+          console.log('🔄 Actualizando catálogo principal tras edición...');
+          window.renderProductCatalog();
+        }
       } else {
         this.showNotification('❌ Error al actualizar el producto', 'error');
       }
@@ -1832,6 +1794,12 @@ class AdminPanel {
       if (success) {
         this.showNotification('✅ Producto eliminado exitosamente', 'success');
         this.loadProductsList(); // Recargar lista
+        
+        // Actualizar catálogo principal inmediatamente para los clientes
+        if (typeof window.renderProductCatalog === 'function') {
+          console.log('🔄 Actualizando catálogo principal tras eliminación...');
+          window.renderProductCatalog();
+        }
       } else {
         this.showNotification('❌ Error al eliminar el producto', 'error');
       }
@@ -1941,6 +1909,13 @@ class AdminPanel {
         this.showNotification(message, 'success');
         this.resetProductForm();
         this.loadProductsList(); // Recargar lista
+        
+        // Actualizar catálogo principal inmediatamente para los clientes
+        if (typeof window.renderProductCatalog === 'function') {
+          console.log('🔄 Actualizando catálogo principal...');
+          await window.renderProductCatalog();
+        }
+        
         showAdminTab('products'); // Volver a la lista
       } else {
         this.showNotification('❌ Error al guardar el producto', 'error');
@@ -2127,131 +2102,13 @@ class AdminPanel {
   }
 
   // ===== DATOS DE EJEMPLO CENTRALIZADOS =====
-  getExampleOrders() {
-    return [
-      { 
-        id: 1, 
-        orderNumber: 'ORD-000001',
-        total: 2850000, 
-        status: 'completed', 
-        date: new Date(Date.now() - 86400000),
-        customer_info: {
-          name: 'María González',
-          email: 'maria@email.com',
-          phone: '3001234567',
-          address: 'Calle 123 #45-67, Bogotá'
-        },
-        items: [
-          { productName: 'Silla Ejecutiva Premium', quantity: 1, price: 2850000 }
-        ]
-      },
-      { 
-        id: 2, 
-        orderNumber: 'ORD-000002',
-        total: 1250000, 
-        status: 'pending', 
-        date: new Date(Date.now() - 172800000),
-        customer_info: {
-          name: 'Carlos Rodríguez',
-          email: 'carlos@email.com',
-          phone: '3009876543',
-          address: 'Carrera 50 #20-30, Medellín'
-        },
-        items: [
-          { productName: 'Silla de Oficina Básica', quantity: 2, price: 625000 }
-        ]
-      },
-      { 
-        id: 3, 
-        orderNumber: 'ORD-000003',
-        total: 3450000, 
-        status: 'confirmed', 
-        date: new Date(Date.now() - 259200000),
-        customer_info: {
-          name: 'Ana Jiménez',
-          email: 'ana@email.com',
-          phone: '3005555555',
-          address: 'Avenida 15 #80-25, Cali'
-        },
-        items: [
-          { productName: 'Set de Sillas de Reunión', quantity: 1, price: 3450000 }
-        ]
-      },
-      { 
-        id: 4, 
-        orderNumber: 'ORD-000004',
-        total: 890000, 
-        status: 'shipped', 
-        date: new Date(Date.now() - 345600000),
-        customer_info: {
-          name: 'Luis Martínez',
-          email: 'luis@email.com',
-          phone: '3007777777',
-          address: 'Calle 70 #11-50, Barranquilla'
-        },
-        items: [
-          { productName: 'Silla Ergonómica', quantity: 1, price: 890000 }
-        ]
-      },
-      { 
-        id: 5, 
-        orderNumber: 'ORD-000005',
-        total: 1750000, 
-        status: 'preparing', 
-        date: new Date(Date.now() - 432000000),
-        customer_info: {
-          name: 'Sandra Pérez',
-          email: 'sandra@email.com',
-          phone: '3008888888',
-          address: 'Transversal 25 #60-40, Bucaramanga'
-        },
-        items: [
-          { productName: 'Silla Gaming Pro', quantity: 1, price: 1750000 }
-        ]
-      },
-      { 
-        id: 6, 
-        orderNumber: 'ORD-000006',
-        total: 650000, 
-        status: 'cancelled', 
-        date: new Date(Date.now() - 518400000),
-        customer_info: {
-          name: 'Roberto Silva',
-          email: 'roberto@email.com',
-          phone: '3001111111',
-          address: 'Diagonal 30 #12-34, Pereira'
-        },
-        items: [
-          { productName: 'Silla Básica', quantity: 1, price: 650000 }
-        ]
-      },
-      { 
-        id: 7, 
-        orderNumber: 'ORD-000007',
-        total: 4200000, 
-        status: 'delivered', 
-        date: new Date(Date.now() - 604800000),
-        customer_info: {
-          name: 'Patricia Morales',
-          email: 'patricia@email.com',
-          phone: '3002222222',
-          address: 'Carrera 80 #25-50, Cartagena'
-        },
-        items: [
-          { productName: 'Silla Ejecutiva Deluxe', quantity: 1, price: 4200000 }
-        ]
-      }
-    ];
-  }
+  // Función eliminada - ya no se usan datos de ejemplo hardcodeados
+  
   getOrderById(orderId) {
     let orders = orderManager?.orders || [];
     
-    // Si no hay órdenes reales, usar las de ejemplo
-    if (orders.length === 0) {
-      orders = this.getExampleOrders();
-    }
-    
-    return orders.find(o => o.id === orderId || o.id === parseInt(orderId));
+    // Buscar la orden por ID
+    return orders.find(order => order.id == orderId);
   }
 
   viewOrder(orderId) {
@@ -2735,7 +2592,9 @@ function changePeriodChart(period) {
     const orders = orderManager?.orders || [];
     let effectiveOrders = orders;
     if (orders.length === 0) {
-      effectiveOrders = window.adminPanel.getExampleOrders();
+      // No mostrar gráficas si no hay órdenes reales
+      console.log('📊 No hay órdenes para mostrar gráficas de ventas');
+      return;
     }
     
     const validOrders = effectiveOrders.filter(order => 

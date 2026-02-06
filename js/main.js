@@ -30,7 +30,14 @@ window.renderProductCatalog = async function() {
     productGrid.innerHTML = '';
 
     if (products.length === 0) {
-      productGrid.innerHTML = '<p style="grid-column: 1/-1; padding: 2rem; text-align: center;">📋 No hay productos disponibles</p>';
+      productGrid.innerHTML = `
+        <div style="grid-column: 1/-1; padding: 4rem; text-align: center; color: #666;">
+          <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+          <h3 style="margin-bottom: 1rem; color: #333;">¡Próximamente productos disponibles!</h3>
+          <p style="margin: 0; font-size: 1rem;">Estamos preparando nuestro catálogo de hermosos accesorios para el cabello.</p>
+          <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #999;">Vuelve pronto para ver todas nuestras creaciones.</p>
+        </div>
+      `;
       return;
     }
 
@@ -52,16 +59,25 @@ window.renderProductCatalog = async function() {
           : '<span class="stock-badge out-of-stock">Agotado</span>';
 
         card.innerHTML = `
-          <img src="${product.image}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'" loading="lazy">
-          <h3>${product.name}</h3>
-          ${product.color ? `<p>Color: ${product.color}</p>` : ''}
-          ${product.size ? `<p>Tamaño: ${product.size}</p>` : ''}
-          <p class="price">$${product.price.toLocaleString('es-CO')}</p>
-          ${stockBadge}
-          <button class="btn add-to-cart-btn" onclick="addToCart('${product.id}')" 
-            ${product.stock === 0 ? 'disabled' : ''}>
-            <i class="fas fa-shopping-cart"></i> Agregar al Carrito
-          </button>
+          <div class="card-image" onclick="openProductModal('${product.id}')">
+            <img src="${product.image}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'" loading="lazy">
+            ${stockBadge}
+          </div>
+          <div class="card-content" onclick="openProductModal('${product.id}')">
+            <h3>${product.name}</h3>
+            ${product.color ? `<p>Color: ${product.color}</p>` : ''}
+            ${product.size ? `<p>Tamaño: ${product.size}</p>` : ''}
+            <p class="price">$${product.price.toLocaleString('es-CO')}</p>
+          </div>
+          <div class="card-actions">
+            <button class="btn add-to-cart-btn" onclick="addToCart('${product.id}')" 
+              ${product.stock === 0 ? 'disabled' : ''}>
+              <i class="fas fa-shopping-cart"></i> Agregar al Carrito
+            </button>
+            <button class="btn btn-secondary view-details-btn" onclick="openProductModal('${product.id}')">
+              <i class="fas fa-eye"></i> Ver Detalles
+            </button>
+          </div>
         `;
 
         console.log(`✅ Producto ${product.name} agregado al DOM`);
@@ -91,6 +107,209 @@ window.renderProductCatalog = async function() {
     }, 2000);
   }
 };
+
+// ====== MODAL DE DETALLES DEL PRODUCTO ======
+let currentModalProduct = null;
+
+window.openProductModal = async function(productId) {
+  console.log('🔍 Abriendo modal para producto:', productId);
+  
+  try {
+    // Verificar que productManager esté disponible y si no, esperar a que se inicialice
+    if (!productManager || !productManager.initialized) {
+      console.log('⏳ Esperando a que ProductManager se inicialice...');
+      await productManager.initialize();
+    }
+    
+    const product = productManager.getProduct(productId);
+    
+    if (!product) {
+      console.error('❌ Producto no encontrado:', productId);
+      showNotification('Producto no encontrado', 'error');
+      return;
+    }
+    
+    currentModalProduct = product;
+    
+    // Actualizar contenido del modal
+    updateModalContent(product);
+    
+    // Mostrar modal
+    const modal = document.getElementById('product-details-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      console.log('✅ Modal abierto para:', product.name);
+    } else {
+      console.error('❌ No se encontró el modal en el DOM');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error abriendo modal:', error);
+    showNotification('Error al abrir detalles del producto', 'error');
+  }
+};
+
+window.closeProductModal = function() {
+  const modal = document.getElementById('product-details-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  currentModalProduct = null;
+  
+  // Reset cantidad
+  const quantityInput = document.getElementById('modal-quantity');
+  if (quantityInput) quantityInput.value = 1;
+  
+  console.log('✅ Modal cerrado');
+};
+
+function updateModalContent(product) {
+  console.log('🔄 Actualizando contenido del modal para:', product.name);
+  
+  try {
+    // Imagen
+    const modalImage = document.getElementById('modal-product-image');
+    if (modalImage) {
+      // Limpiar la imagen anterior
+      modalImage.src = '';
+      modalImage.style.display = 'block';
+      modalImage.style.visibility = 'visible';
+      modalImage.style.opacity = '1';
+      
+      // Establecer la nueva imagen
+      const imageUrl = product.image || 'recursos/lunilogo.png';
+      modalImage.src = imageUrl;
+      modalImage.alt = product.name;
+      
+      console.log('📷 Imagen del modal actualizada:', imageUrl);
+    } else {
+      console.error('❌ No se encontró el elemento modal-product-image');
+    }
+    
+    // Badge de stock
+    const stockBadge = document.getElementById('modal-stock-badge');
+    if (stockBadge) {
+      if (product.stock > 5) {
+        stockBadge.textContent = `${product.stock} disponibles`;
+        stockBadge.className = 'modal-stock-badge in-stock';
+      } else if (product.stock > 0) {
+        stockBadge.textContent = `¡Solo ${product.stock} disponibles!`;
+        stockBadge.className = 'modal-stock-badge low-stock';
+      } else {
+        stockBadge.textContent = 'Agotado';
+        stockBadge.className = 'modal-stock-badge out-of-stock';
+      }
+    }
+    
+    // Información básica
+    const nameElement = document.getElementById('modal-product-name');
+    if (nameElement) nameElement.textContent = product.name;
+    
+    const categoryElement = document.getElementById('modal-product-category');
+    if (categoryElement) categoryElement.textContent = formatCategoryName(product.category);
+    
+    const priceElement = document.getElementById('modal-product-price');
+    if (priceElement) priceElement.textContent = `$${product.price.toLocaleString('es-CO')}`;
+    
+    // Detalles
+    const colorElement = document.getElementById('modal-product-color');
+    if (colorElement) colorElement.textContent = product.color || 'No especificado';
+    
+    const sizeElement = document.getElementById('modal-product-size');
+    if (sizeElement) sizeElement.textContent = product.size || 'No especificado';
+    
+    const stockElement = document.getElementById('modal-product-stock');
+    if (stockElement) stockElement.textContent = product.stock || 0;
+    
+    const descriptionElement = document.getElementById('modal-product-description');
+    if (descriptionElement) descriptionElement.textContent = product.description || 'Sin descripción disponible';
+    
+    // Botón de agregar al carrito y selector de cantidad
+    const addButton = document.getElementById('modal-add-to-cart');
+    const quantityInput = document.getElementById('modal-quantity');
+    
+    if (addButton && quantityInput) {
+      if (product.stock > 0) {
+        addButton.disabled = false;
+        quantityInput.max = Math.min(product.stock, 10);
+        quantityInput.value = 1;
+      } else {
+        addButton.disabled = true;
+        quantityInput.max = 0;
+        quantityInput.value = 0;
+      }
+    }
+    
+    console.log('✅ Contenido del modal actualizado');
+  } catch (error) {
+    console.error('❌ Error actualizando contenido del modal:', error);
+  }
+}
+
+window.changeModalQuantity = function(change) {
+  const quantityInput = document.getElementById('modal-quantity');
+  const currentValue = parseInt(quantityInput.value) || 1;
+  const newValue = currentValue + change;
+  const maxStock = parseInt(quantityInput.max) || 1;
+  
+  if (newValue >= 1 && newValue <= maxStock) {
+    quantityInput.value = newValue;
+  }
+};
+
+window.addToCartFromModal = function() {
+  if (!currentModalProduct) {
+    console.error('❌ No hay producto seleccionado');
+    return;
+  }
+  
+  const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
+  
+  // Agregar al carrito con la cantidad especificada
+  for (let i = 0; i < quantity; i++) {
+    addToCart(currentModalProduct.id);
+  }
+  
+  // Cerrar modal
+  closeProductModal();
+  
+  // Mostrar notificación
+  showNotification(`✅ ${quantity}x ${currentModalProduct.name} agregado${quantity > 1 ? 's' : ''} al carrito`, 'success');
+};
+
+function formatCategoryName(category) {
+  const categoryNames = {
+    'ganchitos': 'Ganchitos',
+    'fruticas': 'Fruticas', 
+    'animalitos': 'Animalitos',
+    'naturales': 'Naturales',
+    'pinzasclasicas': 'Pinzas Clásicas',
+    'floresmedianas': 'Flores Medianas',
+    'floresmini': 'Flores Mini',
+    'sets': 'Sets'
+  };
+  
+  return categoryNames[category] || category;
+}
+
+// Cerrar modal con ESC o clic fuera
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    const modal = document.getElementById('product-details-modal');
+    if (modal && modal.style.display === 'flex') {
+      closeProductModal();
+    }
+  }
+});
+
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('product-details-modal');
+  if (event.target === modal && modal.style.display === 'flex') {
+    closeProductModal();
+  }
+});
 
 // ====== FILTROS DE PRODUCTOS ======
 function initFilters() {

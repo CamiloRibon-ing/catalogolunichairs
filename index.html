@@ -601,7 +601,74 @@
         <i class="fas fa-shopping-cart"></i>
         <span id="cart-count" class="cart-count"></span>
     </div>
-
+    <!-- ===== MODAL DE DETALLES DEL PRODUCTO ===== -->
+    <div class="modal" id="product-details-modal">
+        <div class="modal-content product-modal-content">
+            <button class="modal-close-btn" onclick="closeProductModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="product-modal-body">
+                <div class="product-modal-header">
+                    <h2 id="modal-product-name">Nombre del Producto</h2>
+                    <div class="product-modal-category">
+                        <i class="fas fa-tag"></i>
+                        <span id="modal-product-category">Categoría</span>
+                    </div>
+                    <div class="product-modal-price">
+                        <span class="currency">COP</span>
+                        <span id="modal-product-price" class="price-value">$0</span>
+                    </div>
+                </div>
+                
+                <div class="product-modal-image">
+                    <img id="modal-product-image" src="" alt="" onerror="this.src='recursos/lunilogo.png'">
+                    <div id="modal-stock-badge" class="modal-stock-badge"></div>
+                </div>
+                
+                <div class="product-modal-details">
+                    <div class="product-modal-info">
+                        <div class="info-row">
+                            <i class="fas fa-palette"></i>
+                            <span class="info-label">Color:</span>
+                            <span id="modal-product-color" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-ruler"></i>
+                            <span class="info-label">Tamaño:</span>
+                            <span id="modal-product-size" class="info-value">-</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-boxes"></i>
+                            <span class="info-label">Stock disponible:</span>
+                            <span id="modal-product-stock" class="info-value">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="product-modal-description">
+                        <h4><i class="fas fa-info-circle"></i> Descripción</h4>
+                        <p id="modal-product-description">Descripción del producto</p>
+                    </div>
+                    
+                    <div class="product-modal-actions">
+                        <div class="quantity-selector">
+                            <label for="modal-quantity">Cantidad:</label>
+                            <div class="quantity-controls">
+                                <button type="button" onclick="changeModalQuantity(-1)" class="qty-btn">-</button>
+                                <input type="number" id="modal-quantity" value="1" min="1" max="10" readonly>
+                                <button type="button" onclick="changeModalQuantity(1)" class="qty-btn">+</button>
+                            </div>
+                        </div>
+                        
+                        <button id="modal-add-to-cart" class="btn btn-primary modal-add-btn" onclick="addToCartFromModal()">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Agregar al Carrito</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- SCRIPTS -->
    
     <script>
