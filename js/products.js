@@ -48,7 +48,8 @@ class ProductManager {
         price: parseFloat(product.price),
         color: product.color,
         size: product.size,
-        image: product.image,
+        image: product.image, // Imagen principal (compatibilidad)
+        images: this.parseProductImages(product), // Array de todas las imágenes
         available: product.available,
         stock: product.stock || 0,
         description: product.description,
@@ -62,6 +63,95 @@ class ProductManager {
     }
   }
 
+  // Parsear imágenes de producto (soporta múltiples formatos)
+  parseProductImages(product) {
+    console.log('🔍 Parseando imágenes para:', product.name, 'Campo image:', product.image);
+    const images = [];
+    
+    // Verificar si el campo image contiene JSON con múltiples imágenes
+    if (product.image) {
+      try {
+        // Intentar parsear como JSON
+        const imageData = JSON.parse(product.image);
+        
+        // Si es un objeto con main y additional
+        if (imageData && typeof imageData === 'object' && imageData.main) {
+          // Agregar imagen principal
+          images.push({
+            url: imageData.main,
+            alt: `${product.name} - Imagen principal`,
+            primary: true
+          });
+          
+          // Agregar imágenes adicionales
+          if (imageData.additional && Array.isArray(imageData.additional)) {
+            imageData.additional.forEach((imgUrl, index) => {
+              images.push({
+                url: imgUrl,
+                alt: `${product.name} - Imagen ${index + 2}`,
+                primary: false
+              });
+            });
+          }
+        } else {
+          // Si el JSON no tiene la estructura esperada, usar como imagen simple
+          images.push({
+            url: product.image,
+            alt: `${product.name} - Imagen principal`,
+            primary: true
+          });
+        }
+      } catch (error) {
+        // No es JSON, es una URL simple
+        images.push({
+          url: product.image,
+          alt: `${product.name} - Imagen principal`,
+          primary: true
+        });
+      }
+    }
+    
+    // Manejo legacy para el campo images (si existe)
+    if (product.images) {
+      let additionalImages = [];
+      
+      // Si es un string JSON, parsearlo
+      if (typeof product.images === 'string') {
+        try {
+          additionalImages = JSON.parse(product.images);
+        } catch (error) {
+          console.warn('⚠️ Error parsing images JSON:', error);
+        }
+      }
+      // Si ya es array, usarlo directamente
+      else if (Array.isArray(product.images)) {
+        additionalImages = product.images;
+      }
+      
+      // Agregar imágenes adicionales (solo si no hay imagen principal ya)
+      if (images.length === 0) {
+        additionalImages.forEach((img, index) => {
+          if (typeof img === 'string') {
+            images.push({
+              url: img,
+              alt: `${product.name} - Imagen ${index + 1}`,
+              primary: index === 0
+            });
+          } else if (img && img.url) {
+            images.push({
+              url: img.url,
+              alt: img.alt || `${product.name} - Imagen ${index + 1}`,
+              primary: index === 0
+            });
+          }
+        });
+      }
+    }
+    
+    console.log('📷 Imágenes parseadas:', images);
+    return images;
+  }
+
   // Función mergeProducts eliminada - ya no se necesita
 
   // Productos hardcodeados eliminados - solo se usan productos de Supabase
@@ -72,59 +162,129 @@ class ProductManager {
   }
 
   async addProduct(product) {
+    console.log('➕ Agregando producto con datos:', product);
+    console.log('📷 Imágenes recibidas:', product.images);
+    console.log('🖼️ Imagen principal:', product.image);
+    
     try {
+      // Preparar datos para Supabase
+      const productData = {
+        name: product.name,
+        category: product.category,
+        price: parseFloat(product.price),
+        color: product.color,
+        size: product.size,
+        available: product.available !== false,
+        stock: parseInt(product.stock) || 0,
+        description: product.description || ''
+      };
+      
+      // Manejar imagen principal e imágenes adicionales
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        // Si las imágenes vienen como array de objetos con {url, primary}
+        if (typeof product.images[0] === 'object') {
+          const primaryImage = product.images.find(img => img.primary);
+          
+          // Para compatibilidad con el esquema actual, guardamos la imagen principal
+          // y todas las imágenes (incluyendo adicionales) en el campo 'image' como JSON
+          productData.image = primaryImage ? primaryImage.url : product.images[0].url;
+          
+          // Si hay más de una imagen, guardar todas en el mismo campo como JSON
+          if (product.images.length > 1) {
+            // Crear un objeto con imagen principal y adicionales
+            const imageData = {
+              main: productData.image,
+              additional: product.images
+                .filter(img => !img.primary)
+                .map(img => img.url)
+            };
+            
+            // Solo usar JSON si hay imágenes adicionales
+            if (imageData.additional.length > 0) {
+              productData.image = JSON.stringify(imageData);
+            }
+          }
+        }
+        // Si las imágenes vienen como array de URLs simples
+        else {
+          productData.image = product.images[0];
+          if (product.images.length > 1) {
+            const imageData = {
+              main: product.images[0],
+              additional: product.images.slice(1)
+            };
+            productData.image = JSON.stringify(imageData);
+          }
+        }
+      }
+      // Si viene imagen principal por separado
+      else if (product.image) {
+        productData.image = product.image;
+        
+        // Si vienen imágenes adicionales por separado (desde modal de edición)
+        if (product.additional_images) {
+          const additionalImages = typeof product.additional_images === 'string' 
+            ? JSON.parse(product.additional_images) 
+            : product.additional_images;
+          
+          if (additionalImages && additionalImages.length > 0) {
+            const imageData = {
+              main: product.image,
+              additional: additionalImages
+            };
+            productData.image = JSON.stringify(imageData);
+          }
+        }
+      }
+      // Fallback por si no hay imagen
+      else {
+        productData.image = 'recursos/lunilogo.png';
+      }
+      
+      console.log('📦 Datos finales para Supabase:', productData);
+      
       // Agregar a Supabase
       const { data, error } = await supabaseClient
         .from('products')
-        .insert({
-          name: product.name,
-          category: product.category,
-          price: product.price,
-          color: product.color || '',
-          size: product.size || '',
-          stock: product.stock || 0,
-          available: product.available !== undefined ? product.available : true,
-          description: product.description || '',
-          image: product.image || ''
-        })
+        .insert(productData)
         .select()
         .single();
 
       if (error) {
-        console.error('Error agregando producto a Supabase:', error);
-        return null;
+        console.error('❌ Error agregando producto a Supabase:', error);
+        console.error('🔍 Detalles del error:', JSON.stringify(error, null, 2));
+        console.error('📦 Datos enviados que causaron error:', JSON.stringify(productData, null, 2));
+        
+        // Mostrar error específico si está disponible
+        if (error.message) {
+          console.error('💬 Mensaje de error:', error.message);
+        }
+        if (error.details) {
+          console.error('📋 Detalles técnicos:', error.details);
+        }
+        if (error.hint) {
+          console.error('💡 Sugerencia:', error.hint);
+        }
+        
+        return false;
       }
 
-      // Agregar a la lista local
-      const newProduct = {
-        id: data.id,
-        name: data.name,
-        category: data.category,
-        price: parseFloat(data.price),
-        color: data.color,
-        size: data.size,
-        image: data.image,
-        available: data.available,
-        stock: data.stock,
-        description: data.description,
-        createdAt: new Date(data.created_at).getTime(),
-        fromSupabase: true
-      };
-
-      this.products.push(newProduct);
-      return newProduct;
-
+      console.log('✅ Producto agregado a Supabase:', data);
+      
+      // Recargar productos para mantener sincronización
+      this.initialized = false; // Forzar reinicialización
+      await this.initialize();
+      return true;
+      
     } catch (error) {
-      console.error('❌ Error conectando a Supabase para agregar producto:', error);
-      // Sin productos hardcodeados, no podemos crear fallback local
-      console.warn('⚠️ Producto no pudo guardarse - se requiere conexión a Supabase');
-      return null;
+      console.error('❌ Error en addProduct:', error);
+      return false;
     }
   }
 
   async updateProduct(id, updates) {
     const product = this.getProduct(id);
-    if (!product) return null;
+    if (!product) return false;
 
     try {
       // Si el producto es de Supabase, actualizar en Supabase
@@ -138,7 +298,60 @@ class ProductManager {
         if (updates.stock !== undefined) updateData.stock = updates.stock;
         if (updates.available !== undefined) updateData.available = updates.available;
         if (updates.description !== undefined) updateData.description = updates.description;
-        if (updates.image !== undefined) updateData.image = updates.image;
+        
+        // Manejar imágenes con el mismo formato que addProduct
+        if (updates.image !== undefined || updates.images !== undefined || updates.additional_images !== undefined) {
+          // Usar la misma lógica que en addProduct
+          if (updates.images && Array.isArray(updates.images) && updates.images.length > 0) {
+            // Array de objetos con {url, primary}
+            if (typeof updates.images[0] === 'object') {
+              const primaryImage = updates.images.find(img => img.primary);
+              updateData.image = primaryImage ? primaryImage.url : updates.images[0].url;
+              
+              if (updates.images.length > 1) {
+                const imageData = {
+                  main: updateData.image,
+                  additional: updates.images
+                    .filter(img => !img.primary)
+                    .map(img => img.url)
+                };
+                if (imageData.additional.length > 0) {
+                  updateData.image = JSON.stringify(imageData);
+                }
+              }
+            }
+            // Array de URLs simples
+            else {
+              updateData.image = updates.images[0];
+              if (updates.images.length > 1) {
+                const imageData = {
+                  main: updates.images[0],
+                  additional: updates.images.slice(1)
+                };
+                updateData.image = JSON.stringify(imageData);
+              }
+            }
+          }
+          // Imagen principal separada
+          else if (updates.image !== undefined) {
+            updateData.image = updates.image;
+            
+            // Si hay imágenes adicionales
+            if (updates.additional_images) {
+              const additionalImages = typeof updates.additional_images === 'string' 
+                ? JSON.parse(updates.additional_images) 
+                : updates.additional_images;
+              
+              if (additionalImages && additionalImages.length > 0) {
+                const imageData = {
+                  main: updates.image,
+                  additional: additionalImages
+                };
+                updateData.image = JSON.stringify(imageData);
+              }
+            }
+          }
+        }
 
         const { data, error } = await supabaseClient
           .from('products')
@@ -148,40 +361,24 @@ class ProductManager {
           .single();
 
         if (error) {
-          console.error('Error actualizando producto en Supabase:', error);
-          return null;
+          console.error('❌ Error actualizando producto en Supabase:', error);
+          return false;
         }
 
-        // Actualizar en lista local
-        const updatedProduct = {
-          id: data.id,
-          name: data.name,
-          category: data.category,
-          price: parseFloat(data.price),
-          color: data.color,
-          size: data.size,
-          image: data.image,
-          available: data.available,
-          stock: data.stock,
-          description: data.description,
-          createdAt: new Date(data.created_at).getTime(),
-          fromSupabase: true
-        };
-
-        const index = this.products.findIndex(p => p.id === id);
-        if (index !== -1) {
-          this.products[index] = updatedProduct;
-        }
-
-        return updatedProduct;
+        console.log('✅ Producto actualizado en Supabase:', data);
+        
+        // Recargar productos para mantener sincronización
+        this.initialized = false; // Forzar reinicialización
+        await this.initialize();
+        return true;
       } else {
         // Todos los productos son de Supabase ahora
         console.warn('⚠️ Producto no encontrado en Supabase:', id);
-        return null;
+        return false;
       }
     } catch (error) {
       console.error('❌ Error actualizando producto:', error);
-      return null;
+      return false;
     }
   }
 

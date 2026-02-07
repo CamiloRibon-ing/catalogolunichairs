@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Múltiples Imágenes - Luni Hair Clips</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .demo-title {
+            background: linear-gradient(135deg, #e06c9f, #f8a5c2);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #e06c9f;
+        }
+        
+        .feature-card h3 {
+            color: #e06c9f;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .demo-form {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        
+        .demo-button {
+            background: linear-gradient(135deg, #e06c9f, #f8a5c2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(224, 108, 159, 0.2);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(224, 108, 159, 0.3);
+        }
+        
+        .example-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .example-product {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.active { background: #28a745; }
+        .status-indicator.pending { background: #ffc107; }
+        .status-indicator.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        
+        <div class="demo-title">
+            <h1>🎯 Sistema de Múltiples Imágenes</h1>
+            <p>Demostración completa de la nueva funcionalidad</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>✨ Funcionalidades Implementadas</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3><i class="fas fa-images"></i> Múltiples Imágenes</h3>
+                    <p>Cada producto puede tener hasta <strong>5 imágenes</strong>: 1 principal + 4 adicionales</p>
+                    <ul>
+                        <li>Imagen principal obligatoria</li>
+                        <li>Hasta 4 imágenes adicionales</li>
+                        <li>Subida individual a Cloudinary</li>
+                        <li>Previews en tiempo real</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><i class="fas fa-eye"></i> Galería en Catálogo</h3>
+                    <p>Los productos con múltiples imágenes muestran una <strong>galería interactiva</strong></p>
+                    <ul>
+                        <li>Imagen principal destacada</li>
+                        <li>Thumbnails navegables</li>
+                        <li>Click para cambiar vista</li>
+                        <li>Responsive en móviles</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><i class="fas fa-search-plus"></i> Modal Ampliado</h3>
+                    <p>El modal de detalles incluye <strong>galería completa</strong></p>
+                    <ul>
+                        <li>Vista ampliada de imágenes</li>
+                        <li>Navegación entre imágenes</li>
+                        <li>Thumbnails centrados</li>
+                        <li>Experiencia tipo Amazon</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><i class="fas fa-backward"></i> Retrocompatibilidad</h3>
+                    <p><strong>100% compatible</strong> con productos existentes</p>
+                    <ul>
+                        <li>Productos con 1 imagen funcionan igual</li>
+                        <li>Sistema fallback automático</li>
+                        <li>Sin necesidad de migración</li>
+                        <li>Actualización progresiva</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🛠️ Cómo Usar el Sistema</h2>
+            
+            <div class="demo-form">
+                <h3>📋 Paso a Paso - Crear Producto con Múltiples Imágenes:</h3>
+                
+                <ol style="line-height: 2; font-size: 1.1rem;">
+                    <li><strong>Panel Admin</strong> → Pestaña "Agregar Producto"</li>
+                    <li><strong>Llenar información básica</strong> (nombre, categoría, precio)</li>
+                    <li><strong>Subir imagen principal</strong> (obligatoria)</li>
+                    <li><strong>Hacer clic en "Agregar Imagen Adicional"</strong></li>
+                    <li><strong>Subir hasta 4 imágenes adicionales</strong></li>
+                    <li><strong>Guardar producto</strong></li>
+                    <li><strong>Ver resultado en catálogo</strong> 🎉</li>
+                </ol>
+                
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong>💡 Tip:</strong> Las imágenes adicionales son <em>completamente opcionales</em>. 
+                    Si solo subes la imagen principal, el producto funcionará exactamente como antes.
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎨 Ejemplos Visuales</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                
+                <div>
+                    <h3>📱 Producto con 1 Imagen (Original)</h3>
+                    <div class="example-product">
+                        <div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                            <div style="text-align: center; color: #666;">
+                                <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                                <p>Imagen Simple</p>
+                                <p style="font-size: 0.8rem;">Funciona como siempre</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>🖼️ Producto con Múltiples Imágenes (Nuevo)</h3>
+                    <div class="example-product">
+                        <div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                            <div style="text-align: center; color: #666;">
+                                <i class="fas fa-images" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                                <p>Galería Interactiva</p>
+                                <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px;">
+                                    <div style="width: 20px; height: 20px; background: #e06c9f; border-radius: 3px; border: 2px solid #333;"></div>
+                                    <div style="width: 20px; height: 20px; background: #ccc; border-radius: 3px;"></div>
+                                    <div style="width: 20px; height: 20px; background: #ccc; border-radius: 3px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>📊 Estado del Sistema</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; text-align: center;">
+                    <div class="status-indicator active"></div>
+                    <strong>Frontend</strong><br>
+                    <small>Formulario múltiples imágenes</small>
+                </div>
+                
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; text-align: center;">
+                    <div class="status-indicator active"></div>
+                    <strong>Backend</strong><br>
+                    <small>Gestión en ProductManager</small>
+                </div>
+                
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; text-align: center;">
+                    <div class="status-indicator active"></div>
+                    <strong>Base de Datos</strong><br>
+                    <small>Columna images JSON</small>
+                </div>
+                
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; text-align: center;">
+                    <div class="status-indicator active"></div>
+                    <strong>UI/UX</strong><br>
+                    <small>Galería responsiva</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🚀 Próximos Pasos</h2>
+            
+            <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 2rem; border-radius: 12px; text-align: center;">
+                <h3 style="margin: 0 0 1rem 0;">¡El Sistema Está Listo!</h3>
+                <p style="margin: 0 0 1rem 0; font-size: 1.1rem;">
+                    Ahora puedes crear productos con múltiples imágenes directamente desde el panel admin.
+                </p>
+                
+                <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+                    <button class="demo-button" onclick="window.open('index.html', '_blank')" style="background: rgba(255,255,255,0.2);">
+                        🏠 Ir al Catálogo
+                    </button>
+                    <button class="demo-button" onclick="alert('Accede desde el catálogo principal con el botón Admin')" style="background: rgba(255,255,255,0.2);">
+                        ⚙️ Acceder Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>❓ Preguntas Frecuentes</h2>
+            
+            <div style="display: grid; gap: 1rem;">
+                
+                <details style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                    <summary style="font-weight: bold; cursor: pointer; color: #e06c9f;">
+                        ¿Qué pasa con los productos que ya tengo?
+                    </summary>
+                    <p style="margin: 1rem 0 0 0; padding-left: 1rem; border-left: 3px solid #e06c9f;">
+                        <strong>Nada cambia.</strong> Los productos existentes con una sola imagen funcionan exactamente igual que antes. 
+                        El sistema es 100% retrocompatible.
+                    </p>
+                </details>
+                
+                <details style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                    <summary style="font-weight: bold; cursor: pointer; color: #e06c9f;">
+                        ¿Es obligatorio agregar múltiples imágenes?
+                    </summary>
+                    <p style="margin: 1rem 0 0 0; padding-left: 1rem; border-left: 3px solid #e06c9f;">
+                        <strong>No es obligatorio.</strong> Solo la imagen principal es requerida. 
+                        Las imágenes adicionales son completamente opcionales.
+                    </p>
+                </details>
+                
+                <details style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                    <summary style="font-weight: bold; cursor: pointer; color: #e06c9f;">
+                        ¿Cuántas imágenes adicionales puedo agregar?
+                    </summary>
+                    <p style="margin: 1rem 0 0 0; padding-left: 1rem; border-left: 3px solid #e06c9f;">
+                        <strong>Hasta 4 imágenes adicionales</strong> + 1 imagen principal = 5 imágenes máximo por producto. 
+                        Esto es ideal para mostrar diferentes ángulos del producto.
+                    </p>
+                </details>
+                
+                <details style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                    <summary style="font-weight: bold; cursor: pointer; color: #e06c9f;">
+                        ¿Cómo se ven en móviles?
+                    </summary>
+                    <p style="margin: 1rem 0 0 0; padding-left: 1rem; border-left: 3px solid #e06c9f;">
+                        <strong>Perfectamente adaptadas.</strong> La galería es completamente responsiva y se adapta a pantallas pequeñas 
+                        manteniendo una excelente experiencia de usuario.
+                    </p>
+                </details>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="js/env-config.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

@@ -118,18 +118,9 @@
     <section id="catalogo">
         <h2 data-aos="fade-up">Catálogo</h2>
 
-        <!-- FILTROS -->
-        <div class="filters" data-aos="fade-up">
-            <button class="filter-btn" data-category="all">Todos</button>
-            <button class="filter-btn" data-category="ganchitos">Ganchitos</button>
-            <button class="filter-btn" data-category="fruticas">Fruticas</button>
-            <button class="filter-btn" data-category="animalitos">Animalitos</button>
-            <button class="filter-btn" data-category="naturales">Naturales</button>
-            <button class="filter-btn" data-category="pinzasclasicas">Pinzas Clasicas</button>
-            <button class="filter-btn" data-category="floresmedianas">Flores Medianas</button>
-            <button class="filter-btn" data-category="floresmini">Flores Mini</button>
-            <button class="filter-btn" data-category="sets">Sets</button>
-
+        <!-- FILTROS DINÁMICOS -->
+        <div class="filters" data-aos="fade-up" id="category-filters">
+            <!-- Los filtros se cargan dinámicamente desde la base de datos -->
         </div>
 
         <!-- GRID DE PRODUCTOS (se renderiza dinámicamente) -->
@@ -553,24 +544,40 @@
                     </div>
 
                     <div class="form-section">
-                        <h4>Imagen del Producto</h4>
-                        <div class="image-upload-container">
-                            <div class="image-preview-wrapper">
-                                <img id="product-image-preview" src="recursos/lunilogo.png" alt="Preview">
-                                <div class="upload-progress-container">
-                                    <div id="upload-progress" class="upload-progress"></div>
+                        <h4>Imágenes del Producto</h4>
+                        <div class="multiple-images-container">
+                            <!-- Imagen Principal -->
+                            <div class="image-upload-container">
+                                <h5><i class="fas fa-star"></i> Imagen Principal *</h5>
+                                <div class="image-preview-wrapper">
+                                    <img id="product-image-preview" src="recursos/lunilogo.png" alt="Preview">
+                                    <div class="upload-progress-container">
+                                        <div id="upload-progress" class="upload-progress"></div>
+                                    </div>
+                                </div>
+                                <div class="upload-controls">
+                                    <label for="product-image-input" class="btn btn-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Subir Imagen Principal
+                                    </label>
+                                    <input type="file" id="product-image-input" accept="image/*" style="display: none;">
+                                    <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="product-image-url">URL de Imagen Principal (Cloudinary)</label>
+                                    <input type="text" id="product-image-url" placeholder="Se llenará automáticamente al subir">
                                 </div>
                             </div>
-                            <div class="upload-controls">
-                                <label for="product-image-input" class="btn btn-upload">
-                                    <i class="fas fa-cloud-upload-alt"></i> Subir Imagen
-                                </label>
-                                <input type="file" id="product-image-input" accept="image/*" style="display: none;">
-                                <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="product-image-url">URL de Imagen (Cloudinary)</label>
-                                <input type="text" id="product-image-url" placeholder="Se llenará automáticamente al subir">
+                            
+                            <!-- Imágenes Adicionales -->
+                            <div class="additional-images-container">
+                                <h5><i class="fas fa-images"></i> Imágenes Adicionales (Opcional)</h5>
+                                <p class="help-text">Agrega hasta 4 imágenes adicionales para mostrar diferentes ángulos del producto</p>
+                                <div id="additional-images-list" class="additional-images-list">
+                                    <!-- Las imágenes adicionales aparecerán aquí -->
+                                </div>
+                                <button type="button" id="add-additional-image" class="btn btn-secondary">
+                                    <i class="fas fa-plus"></i> Agregar Imagen Adicional
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -601,69 +608,96 @@
         <i class="fas fa-shopping-cart"></i>
         <span id="cart-count" class="cart-count"></span>
     </div>
-    <!-- ===== MODAL DE DETALLES DEL PRODUCTO ===== -->
+    <!-- ===== MODAL PROFESIONAL DE DETALLES DEL PRODUCTO ===== -->
     <div class="modal" id="product-details-modal">
-        <div class="modal-content product-modal-content">
+        <div class="modal-content professional-product-modal">
             <button class="modal-close-btn" onclick="closeProductModal()">
                 <i class="fas fa-times"></i>
             </button>
             
-            <div class="product-modal-body">
-                <div class="product-modal-header">
-                    <h2 id="modal-product-name">Nombre del Producto</h2>
-                    <div class="product-modal-category">
-                        <i class="fas fa-tag"></i>
-                        <span id="modal-product-category">Categoría</span>
-                    </div>
-                    <div class="product-modal-price">
-                        <span class="currency">COP</span>
-                        <span id="modal-product-price" class="price-value">$0</span>
+            <div class="professional-modal-container">
+                <!-- Sección de Galería de Imágenes (Izquierda) -->
+                <div class="modal-gallery-section">
+                    <div class="modal-image-container" id="modal-image-container">
+                        <!-- Aquí se renderiza la galería dinámicamente -->
                     </div>
                 </div>
                 
-                <div class="product-modal-image">
-                    <img id="modal-product-image" src="" alt="" onerror="this.src='recursos/lunilogo.png'">
-                    <div id="modal-stock-badge" class="modal-stock-badge"></div>
-                </div>
-                
-                <div class="product-modal-details">
-                    <div class="product-modal-info">
-                        <div class="info-row">
-                            <i class="fas fa-palette"></i>
-                            <span class="info-label">Color:</span>
-                            <span id="modal-product-color" class="info-value">-</span>
+                <!-- Sección de Información del Producto (Derecha) -->
+                <div class="modal-info-section">
+                    <div class="product-header">
+                        <div class="product-badge">
+                            <span id="modal-product-category" class="category-badge">Categoría</span>
+                            <div id="modal-stock-badge" class="stock-badge-new"></div>
                         </div>
-                        <div class="info-row">
-                            <i class="fas fa-ruler"></i>
-                            <span class="info-label">Tamaño:</span>
-                            <span id="modal-product-size" class="info-value">-</span>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-boxes"></i>
-                            <span class="info-label">Stock disponible:</span>
-                            <span id="modal-product-stock" class="info-value">0</span>
+                        <h1 id="modal-product-name" class="product-title">Nombre del Producto</h1>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <span class="rating-text">4.8 (1,221)</span>
                         </div>
                     </div>
                     
-                    <div class="product-modal-description">
-                        <h4><i class="fas fa-info-circle"></i> Descripción</h4>
-                        <p id="modal-product-description">Descripción del producto</p>
+                    <div class="product-pricing">
+                        <div class="price-container">
+                            <span class="currency-symbol">$</span>
+                            <span id="modal-product-price" class="main-price">0</span>
+                        </div>
                     </div>
                     
-                    <div class="product-modal-actions">
-                        <div class="quantity-selector">
+                    <div class="product-specifications">
+                        <h3>Especificaciones</h3>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <i class="fas fa-palette"></i>
+                                <span class="spec-label">Color:</span>
+                                <span id="modal-product-color" class="spec-value">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-ruler"></i>
+                                <span class="spec-label">Tamaño:</span>
+                                <span id="modal-product-size" class="spec-value">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-boxes"></i>
+                                <span class="spec-label">Stock:</span>
+                                <span id="modal-product-stock" class="spec-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-description-section">
+                        <h3>Descripción del Producto</h3>
+                        <div id="modal-product-description" class="description-content">
+                            Descripción del producto
+                        </div>
+                    </div>
+                    
+                    <div class="product-actions-section">
+                        <div class="quantity-section">
                             <label for="modal-quantity">Cantidad:</label>
-                            <div class="quantity-controls">
-                                <button type="button" onclick="changeModalQuantity(-1)" class="qty-btn">-</button>
+                            <div class="quantity-controls-new">
+                                <button type="button" onclick="changeModalQuantity(-1)" class="qty-btn-new">
+                                    <i class="fas fa-minus"></i>
+                                </button>
                                 <input type="number" id="modal-quantity" value="1" min="1" max="10" readonly>
-                                <button type="button" onclick="changeModalQuantity(1)" class="qty-btn">+</button>
+                                <button type="button" onclick="changeModalQuantity(1)" class="qty-btn-new">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
                         </div>
                         
-                        <button id="modal-add-to-cart" class="btn btn-primary modal-add-btn" onclick="addToCartFromModal()">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Agregar al Carrito</span>
-                        </button>
+                        <div class="action-buttons">
+                            <button id="modal-add-to-cart" class="btn-add-to-cart-new" onclick="addToCartFromModal()">
+                                <i class="fas fa-shopping-cart"></i>
+                                Agregar al Carrito
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -60,7 +60,7 @@ window.renderProductCatalog = async function() {
 
         card.innerHTML = `
           <div class="card-image" onclick="openProductModal('${product.id}')">
-            <img src="${product.image}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'" loading="lazy">
+            ${generateProductGalleryHTML(product)}
             ${stockBadge}
           </div>
           <div class="card-content" onclick="openProductModal('${product.id}')">
@@ -166,41 +166,63 @@ window.closeProductModal = function() {
 };
 
 function updateModalContent(product) {
-  console.log('🔄 Actualizando contenido del modal para:', product.name);
+  console.log('🔄 Actualizando contenido del modal profesional para:', product.name);
   
   try {
-    // Imagen
-    const modalImage = document.getElementById('modal-product-image');
-    if (modalImage) {
-      // Limpiar la imagen anterior
-      modalImage.src = '';
-      modalImage.style.display = 'block';
-      modalImage.style.visibility = 'visible';
-      modalImage.style.opacity = '1';
-      
-      // Establecer la nueva imagen
-      const imageUrl = product.image || 'recursos/lunilogo.png';
-      modalImage.src = imageUrl;
-      modalImage.alt = product.name;
-      
-      console.log('📷 Imagen del modal actualizada:', imageUrl);
-    } else {
-      console.error('❌ No se encontró el elemento modal-product-image');
-    }
-    
-    // Badge de stock
-    const stockBadge = document.getElementById('modal-stock-badge');
-    if (stockBadge) {
-      if (product.stock > 5) {
-        stockBadge.textContent = `${product.stock} disponibles`;
-        stockBadge.className = 'modal-stock-badge in-stock';
-      } else if (product.stock > 0) {
-        stockBadge.textContent = `¡Solo ${product.stock} disponibles!`;
-        stockBadge.className = 'modal-stock-badge low-stock';
+    // Galería de imágenes del modal (ahora con soporte completo para múltiples imágenes)
+    const modalImageContainer = document.getElementById('modal-image-container');
+    if (modalImageContainer) {
+      // Si tiene múltiples imágenes, crear galería completa profesional
+      if (product.images && product.images.length > 1) {
+        const modalGalleryId = `modal-gallery-${product.id}`;
+        const mainImage = product.images.find(img => img.primary) || product.images[0];
+        
+        modalImageContainer.innerHTML = `
+          <div class="professional-gallery" id="${modalGalleryId}" data-current-index="0" data-images='${JSON.stringify(product.images.map(img => ({url: img.url, alt: img.alt})))}'>
+            <div class="main-image-display">
+              <img id="${modalGalleryId}-main" src="${mainImage.url}" alt="${mainImage.alt}">
+              
+              <!-- Contador de imágenes -->
+              <div class="image-counter-new">
+                <span id="${modalGalleryId}-counter">1 / ${product.images.length}</span>
+              </div>
+              
+              <!-- Flechas de navegación -->
+              <div class="navigation-arrows">
+                <button class="nav-arrow prev-arrow" onclick="navigateGallery('${modalGalleryId}', -1)">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-arrow next-arrow" onclick="navigateGallery('${modalGalleryId}', 1)">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="thumbnails-gallery">
+              ${product.images.map((image, index) => {
+                const isActive = image.primary || index === 0;
+                return `
+                  <div class="gallery-thumbnail-new ${isActive ? 'active' : ''}" 
+                       onclick="selectGalleryImage('${modalGalleryId}', ${index})">
+                    <img src="${image.url}" alt="${image.alt}" onerror="this.src='recursos/lunilogo.png'">
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
       } else {
-        stockBadge.textContent = 'Agotado';
-        stockBadge.className = 'modal-stock-badge out-of-stock';
+        // Solo una imagen - mostrar imagen simple pero con diseño profesional
+        const imageUrl = getProductMainImageUrl(product);
+        modalImageContainer.innerHTML = `
+          <div class="single-image-display">
+            <img src="${imageUrl}" alt="${product.name}" 
+                 onerror="this.src='recursos/lunilogo.png'">
+          </div>
+        `;
       }
+      
+      console.log('📷 Galería del modal profesional actualizada');
     }
     
     // Información básica
@@ -211,9 +233,24 @@ function updateModalContent(product) {
     if (categoryElement) categoryElement.textContent = formatCategoryName(product.category);
     
     const priceElement = document.getElementById('modal-product-price');
-    if (priceElement) priceElement.textContent = `$${product.price.toLocaleString('es-CO')}`;
+    if (priceElement) priceElement.textContent = product.price.toLocaleString('es-CO');
     
-    // Detalles
+    // Badge de stock nuevo
+    const stockBadgeNew = document.querySelector('.stock-badge-new');
+    if (stockBadgeNew) {
+      if (product.stock > 5) {
+        stockBadgeNew.innerHTML = `<i class="fas fa-check-circle"></i> ${product.stock} disponibles`;
+        stockBadgeNew.className = 'stock-badge-new in-stock-new';
+      } else if (product.stock > 0) {
+        stockBadgeNew.innerHTML = `<i class="fas fa-exclamation-circle"></i> ¡Solo ${product.stock} disponibles!`;
+        stockBadgeNew.className = 'stock-badge-new low-stock-new';
+      } else {
+        stockBadgeNew.innerHTML = `<i class="fas fa-times-circle"></i> Agotado`;
+        stockBadgeNew.className = 'stock-badge-new out-of-stock-new';
+      }
+    }
+    
+    // Especificaciones
     const colorElement = document.getElementById('modal-product-color');
     if (colorElement) colorElement.textContent = product.color || 'No especificado';
     
@@ -224,7 +261,10 @@ function updateModalContent(product) {
     if (stockElement) stockElement.textContent = product.stock || 0;
     
     const descriptionElement = document.getElementById('modal-product-description');
-    if (descriptionElement) descriptionElement.textContent = product.description || 'Sin descripción disponible';
+    if (descriptionElement) {
+      const description = product.description || 'Producto de alta calidad diseñado para brindar comodidad y estilo. Perfecto para cualquier ambiente.';
+      descriptionElement.innerHTML = `<p>${description}</p>`;
+    }
     
     // Botón de agregar al carrito y selector de cantidad
     const addButton = document.getElementById('modal-add-to-cart');
@@ -310,6 +350,167 @@ document.addEventListener('click', function(event) {
     closeProductModal();
   }
 });
+
+// ====== GENERAR FILTROS DINÁMICOS ======
+async function generateCategoryFilters() {
+  try {
+    console.log('🔄 Generando filtros de categoría...');
+    
+    const filtersContainer = document.getElementById('category-filters');
+    if (!filtersContainer) {
+      console.error('❌ Contenedor de filtros no encontrado');
+      return;
+    }
+    
+    // Obtener categorías activas de la base de datos
+    await categoryManager.initialize();
+    const categories = categoryManager.getActiveCategories();
+    
+    console.log(`📁 Categorías activas encontradas: ${categories.length}`);
+    
+    // Crear HTML para filtros
+    let filtersHTML = '<button class="filter-btn active" data-category="all">Todos</button>';
+    
+    categories.forEach(category => {
+      const categoryName = category.name || formatCategoryName(category.slug);
+      const icon = category.icon ? `${category.icon} ` : '';
+      filtersHTML += `<button class="filter-btn" data-category="${category.slug}">${icon}${categoryName}</button>`;
+    });
+    
+    // Insertar en el DOM
+    filtersContainer.innerHTML = filtersHTML;
+    
+    console.log('✅ Filtros de categoría generados dinámicamente');
+    
+    // Inicializar eventos después de generar botones
+    setTimeout(() => {
+      initFilters();
+    }, 100);
+    
+  } catch (error) {
+    console.error('❌ Error generando filtros:', error);
+    
+    // Fallback: mostrar filtros básicos
+    const filtersContainer = document.getElementById('category-filters');
+    if (filtersContainer) {
+      filtersContainer.innerHTML = '<button class="filter-btn active" data-category="all">Todos</button>';
+    }
+  }
+}
+
+// ====== FUNCIONES HELPER PARA IMÁGENES ======
+
+/**
+ * Extrae la URL de la imagen principal de un producto
+ * Maneja tanto el formato simple (URL string) como el formato JSON con múltiples imágenes
+ */
+function getProductMainImageUrl(product) {
+  if (!product.image) {
+    return 'recursos/lunilogo.png';
+  }
+  
+  // Si product.images ya está parseado, usar la imagen principal
+  if (product.images && product.images.length > 0) {
+    const mainImage = product.images.find(img => img.primary) || product.images[0];
+    return mainImage.url || mainImage;
+  }
+  
+  try {
+    // Intentar parsear como JSON
+    const imageData = JSON.parse(product.image);
+    
+    // Si es un objeto con main y additional
+    if (imageData && typeof imageData === 'object' && imageData.main) {
+      return imageData.main;
+    } else {
+      // Si el JSON no tiene la estructura esperada, usar como imagen simple
+      return product.image;
+    }
+  } catch (error) {
+    // No es JSON, es una URL simple
+    return product.image;
+  }
+}
+
+// ====== FUNCIONES PARA MÚLTIPLES IMÁGENES ======
+function generateProductGalleryHTML(product) {
+  // En el catálogo, siempre mostrar solo la imagen principal para un look más limpio
+  const mainImageUrl = getProductMainImageUrl(product);
+  return `<img src="${mainImageUrl}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'" loading="lazy">`;
+}
+
+function switchGalleryImage(galleryId, imageUrl, imageAlt, thumbnail) {
+  // Cambiar imagen principal
+  const mainImage = document.getElementById(`${galleryId}-main`);
+  if (mainImage) {
+    mainImage.src = imageUrl;
+    mainImage.alt = imageAlt;
+  }
+  
+  // Actualizar thumbnails activos
+  const thumbnails = document.querySelectorAll(`#${galleryId}-thumbnails .gallery-thumbnail`);
+  thumbnails.forEach(thumb => thumb.classList.remove('active'));
+  
+  if (thumbnail) {
+    thumbnail.classList.add('active');
+  }
+}
+
+/**
+ * Navegar por la galería con flechas (Amazon style)
+ */
+function navigateGallery(galleryId, direction) {
+  const gallery = document.getElementById(galleryId);
+  if (!gallery) return;
+  
+  const currentIndex = parseInt(gallery.dataset.currentIndex || '0');
+  const images = JSON.parse(gallery.dataset.images || '[]');
+  
+  if (images.length <= 1) return;
+  
+  const newIndex = (currentIndex + direction + images.length) % images.length;
+  selectGalleryImage(galleryId, newIndex);
+}
+
+/**
+ * Seleccionar imagen específica por índice
+ */
+function selectGalleryImage(galleryId, index) {
+  const gallery = document.getElementById(galleryId);
+  if (!gallery) return;
+  
+  const images = JSON.parse(gallery.dataset.images || '[]');
+  if (index < 0 || index >= images.length) return;
+  
+  // Actualizar imagen principal
+  const mainImage = document.getElementById(`${galleryId}-main`);
+  if (mainImage) {
+    mainImage.src = images[index].url;
+    mainImage.alt = images[index].alt;
+  }
+  
+  // Actualizar contador
+  const counter = document.getElementById(`${galleryId}-counter`);
+  if (counter) {
+    counter.textContent = `${index + 1} / ${images.length}`;
+  }
+  
+  // Actualizar thumbnails activos
+  const thumbnails = document.querySelectorAll(`#${galleryId}-thumbnails .gallery-thumbnail`);
+  thumbnails.forEach((thumb, thumbIndex) => {
+    thumb.classList.toggle('active', thumbIndex === index);
+  });
+  
+  // Guardar índice actual
+  gallery.dataset.currentIndex = index.toString();
+}
+
+// Hacer funciones disponibles globalmente
+window.generateProductGalleryHTML = generateProductGalleryHTML;
+window.switchGalleryImage = switchGalleryImage;
+window.navigateGallery = navigateGallery;
+window.selectGalleryImage = selectGalleryImage;
+window.getProductMainImageUrl = getProductMainImageUrl;
 
 // ====== FILTROS DE PRODUCTOS ======
 function initFilters() {
@@ -559,7 +760,7 @@ function renderCart() {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'cart-item';
     itemDiv.innerHTML = `
-      <img src="${product.image}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
+      <img src="${getProductMainImageUrl(product)}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
       <div class="cart-item-info">
         <h4>${product.name}</h4>
         ${item.color ? `<p>Color: ${item.color}</p>` : ''}
@@ -696,6 +897,9 @@ function setupEventListeners() {
   }
 }
 
+// Hacer función disponible globalmente
+window.generateCategoryFilters = generateCategoryFilters;
+
 // ====== Inicialización de la aplicación ======
 async function initializeApp() {
   try {
@@ -721,10 +925,10 @@ async function initializeApp() {
     await renderProductCatalog();
     console.log('✅ Catálogo renderizado');
     
-    // Configurar filtros después de cargar productos
-    setTimeout(() => {
-      initFilters();
-      console.log('✅ Filtros inicializados');
+    // Generar filtros dinámicos y configurar eventos
+    setTimeout(async () => {
+      await generateCategoryFilters();
+      console.log('✅ Filtros dinámicos generados');
     }, 200);
     
     console.log('✅ Aplicación inicializada correctamente');

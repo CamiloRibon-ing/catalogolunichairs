@@ -89,6 +89,12 @@ class AdminPanel {
     if (imageInput) {
       imageInput.addEventListener('change', (e) => this.handleImageUpload(e));
     }
+    
+    // Event listener para agregar imágenes adicionales
+    const addImageBtn = document.getElementById('add-additional-image');
+    if (addImageBtn) {
+      addImageBtn.addEventListener('click', () => this.addAdditionalImageField());
+    }
 
     // Event listener para botón Salir
     const logoutBtn = document.getElementById('admin-logout');
@@ -1261,6 +1267,9 @@ class AdminPanel {
       if (result.success) {
         alert('Categoría eliminada exitosamente');
         this.loadCategoriesList(); // Recargar lista
+        
+        // Actualizar filtros en la página principal
+        await this.updateCategoryFilters();
       } else {
         alert('Error al eliminar la categoría: ' + (result.message || 'Error desconocido'));
       }
@@ -1320,6 +1329,9 @@ class AdminPanel {
         alert(categoryId ? 'Categoría actualizada exitosamente' : 'Categoría creada exitosamente');
         document.getElementById('category-form').style.display = 'none';
         this.loadCategoriesList(); // Recargar lista
+        
+        // Actualizar filtros en la página principal
+        await this.updateCategoryFilters();
       } else {
         alert('Error al guardar la categoría');
       }
@@ -1419,24 +1431,44 @@ class AdminPanel {
           </div>
           
           <div class="form-section">
-            <h4>Imagen del Producto</h4>
-            <div class="image-upload-container">
-              <div class="image-preview-wrapper">
-                <img id="edit-product-image-preview" src="${product.image || 'recursos/lunilogo.png'}" alt="Preview" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px;">
-                <div class="upload-progress-container">
-                  <div id="edit-upload-progress" class="upload-progress"></div>
+            <h4>Imágenes del Producto</h4>
+            <div class="images-upload-container">
+              <!-- Imagen Principal -->
+              <div class="main-image-section">
+                <h5>Imagen Principal *</h5>
+                <div class="image-upload-container">
+                  <div class="image-preview-wrapper">
+                    <img id="edit-product-image-preview" src="${product.image || 'recursos/lunilogo.png'}" alt="Preview" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px;">
+                    <div class="upload-progress-container">
+                      <div id="edit-upload-progress" class="upload-progress"></div>
+                    </div>
+                  </div>
+                  <div class="upload-controls">
+                    <label for="edit-product-image-input" class="btn btn-upload">
+                      <i class="fas fa-cloud-upload-alt"></i> Subir Nueva Imagen Principal
+                    </label>
+                    <input type="file" id="edit-product-image-input" accept="image/*" style="display: none;">
+                    <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="edit-product-image-url">URL de Imagen Principal (Cloudinary)</label>
+                    <input type="text" id="edit-product-image-url" value="${product.image || ''}" placeholder="Se actualizará automáticamente al subir" onchange="document.getElementById('edit-product-image-preview').src = this.value || 'recursos/lunilogo.png'">
+                  </div>
                 </div>
               </div>
-              <div class="upload-controls">
-                <label for="edit-product-image-input" class="btn btn-upload">
-                  <i class="fas fa-cloud-upload-alt"></i> Subir Nueva Imagen
-                </label>
-                <input type="file" id="edit-product-image-input" accept="image/*" style="display: none;">
-                <small>Formatos: JPG, PNG, WEBP (máx. 5MB)</small>
-              </div>
-              <div class="form-group">
-                <label for="edit-product-image-url">URL de Imagen (Cloudinary)</label>
-                <input type="text" id="edit-product-image-url" value="${product.image || ''}" placeholder="Se actualizará automáticamente al subir" onchange="document.getElementById('edit-product-image-preview').src = this.value || 'recursos/lunilogo.png'">
+              
+              <!-- Imágenes Adicionales -->
+              <div class="additional-images-section">
+                <h5>Imágenes Adicionales (Opcional)</h5>
+                <div id="edit-additional-images-container">
+                  <!-- Se cargarán dinámicamente las imágenes existentes -->
+                </div>
+                <div class="additional-images-controls">
+                  <button type="button" onclick="adminPanel.addEditAdditionalImageField()" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i> Agregar Imagen Adicional
+                  </button>
+                  <small class="help-text">Máximo 4 imágenes adicionales. Ideal para mostrar diferentes ángulos del producto.</small>
+                </div>
               </div>
             </div>
           </div>
@@ -1451,6 +1483,9 @@ class AdminPanel {
           </div>
           
           <div class="form-actions">
+            <button type="button" onclick="adminPanel.showEditProductPreview('${product.id}')" class="btn btn-info">
+              <i class="fas fa-eye"></i> Vista Previa Profesional
+            </button>
             <button type="button" onclick="adminPanel.updateProductFromModal('${product.id}')" class="btn btn-primary">
               <i class="fas fa-save"></i> Actualizar Producto
             </button>
@@ -1466,6 +1501,9 @@ class AdminPanel {
     
     // Cargar categorías en el select y establecer la actual
     this.loadCategoriesInEditModal(product.category);
+    
+    // Cargar imágenes adicionales existentes
+    this.loadExistingAdditionalImages(product);
     
     // Configurar event listener para subida de imagen en modal de editar
     const editImageInput = document.getElementById('edit-product-image-input');
@@ -1577,6 +1615,383 @@ class AdminPanel {
     }, 1000);
   }
 
+  // ===== FUNCIONES PARA MÚLTIPLES IMÁGENES EN MODAL DE EDITAR =====
+  
+  /**
+   * Carga las imágenes adicionales existentes del producto en el modal de edición
+   */
+  loadExistingAdditionalImages(product) {
+    console.log('🖼️ Cargando imágenes existentes del producto:', product.id);
+    
+    const container = document.getElementById('edit-additional-images-container');
+    if (!container) return;
+
+    // Limpiar contenedor
+    container.innerHTML = '';
+
+    // Parsear imágenes adicionales
+    let additionalImages = [];
+    try {
+      if (product.additional_images) {
+        additionalImages = Array.isArray(product.additional_images) 
+          ? product.additional_images 
+          : JSON.parse(product.additional_images);
+      }
+    } catch (error) {
+      console.warn('Error al parsear imágenes adicionales:', error);
+      additionalImages = [];
+    }
+
+    // Crear campos para cada imagen adicional existente
+    additionalImages.forEach((imageUrl, index) => {
+      if (imageUrl && imageUrl.trim()) {
+        this.addEditAdditionalImageField(imageUrl);
+      }
+    });
+
+    // Si no hay imágenes adicionales, agregar un campo vacío
+    if (additionalImages.length === 0) {
+      this.addEditAdditionalImageField();
+    }
+  }
+
+  /**
+   * Agregar un nuevo campo de imagen adicional en el modal de edición
+   */
+  addEditAdditionalImageField(existingUrl = '') {
+    const container = document.getElementById('edit-additional-images-container');
+    if (!container) return;
+
+    const currentFields = container.querySelectorAll('.additional-image-field').length;
+    if (currentFields >= 4) {
+      this.showNotification('⚠️ Máximo 4 imágenes adicionales permitidas', 'warning');
+      return;
+    }
+
+    const fieldIndex = currentFields;
+    const fieldHtml = `
+      <div class="additional-image-field" data-index="${fieldIndex}">
+        <div class="image-field-header">
+          <h6>Imagen Adicional ${fieldIndex + 1}</h6>
+          <button type="button" onclick="this.parentElement.parentElement.remove()" class="btn-remove-image" title="Eliminar esta imagen">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+        <div class="image-upload-container">
+          <div class="image-preview-wrapper">
+            <img class="additional-image-preview" src="${existingUrl || 'recursos/lunilogo.png'}" alt="Preview ${fieldIndex + 1}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+            <div class="upload-progress-container">
+              <div class="additional-upload-progress" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div class="upload-controls">
+            <label for="edit-additional-image-input-${fieldIndex}" class="btn btn-upload btn-sm">
+              <i class="fas fa-cloud-upload-alt"></i> Subir
+            </label>
+            <input type="file" id="edit-additional-image-input-${fieldIndex}" accept="image/*" style="display: none;">
+          </div>
+          <div class="form-group">
+            <input type="text" class="additional-image-url" value="${existingUrl}" placeholder="URL de imagen adicional">
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', fieldHtml);
+
+    // Configurar event listener para el nuevo campo
+    const newInput = document.getElementById(`edit-additional-image-input-${fieldIndex}`);
+    if (newInput) {
+      newInput.addEventListener('change', (e) => this.handleEditAdditionalImageUpload(e, fieldIndex));
+    }
+
+    // Configurar cambio en URL input
+    const urlInput = container.querySelector(`[data-index="${fieldIndex}"] .additional-image-url`);
+    if (urlInput) {
+      urlInput.addEventListener('change', (e) => {
+        const preview = container.querySelector(`[data-index="${fieldIndex}"] .additional-image-preview`);
+        if (preview) {
+          preview.src = e.target.value || 'recursos/lunilogo.png';
+        }
+      });
+    }
+  }
+
+  /**
+   * Manejar subida de imagen adicional en modal de edición
+   */
+  async handleEditAdditionalImageUpload(event, fieldIndex) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showNotification('Error: Solo se permiten archivos de imagen (JPG, PNG, WEBP, GIF)', 'error');
+      return;
+    }
+
+    // Validar tamaño
+    if (file.size > 5 * 1024 * 1024) {
+      this.showNotification('Error: La imagen debe ser menor a 5MB', 'error');
+      return;
+    }
+
+    try {
+      const container = document.getElementById('edit-additional-images-container');
+      const field = container.querySelector(`[data-index="${fieldIndex}"]`);
+      const progress = field.querySelector('.additional-upload-progress');
+      const preview = field.querySelector('.additional-image-preview');
+      const urlInput = field.querySelector('.additional-image-url');
+
+      // Mostrar progreso
+      progress.style.width = '20%';
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'lunistore');
+      formData.append('folder', 'lunistore/products');
+
+      progress.style.width = '50%';
+
+      const response = await fetch('https://api.cloudinary.com/v1_1/dwjaidrip/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      progress.style.width = '80%';
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      progress.style.width = '100%';
+
+      // Actualizar preview y URL
+      if (preview && urlInput) {
+        preview.src = result.secure_url;
+        urlInput.value = result.secure_url;
+      }
+
+      this.showNotification(`✅ Imagen adicional ${fieldIndex + 1} subida exitosamente`, 'success');
+      
+      // Ocultar progreso
+      setTimeout(() => {
+        progress.style.width = '0%';
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error al subir imagen adicional:', error);
+      this.showNotification('❌ Error al subir la imagen adicional', 'error');
+      
+      const field = document.querySelector(`[data-index="${fieldIndex}"]`);
+      if (field) {
+        const progress = field.querySelector('.additional-upload-progress');
+        if (progress) progress.style.width = '0%';
+      }
+    }
+  }
+
+  /**
+   * Recopilar todas las imágenes adicionales del modal de edición
+   */
+  collectEditProductImages() {
+    const additionalImages = [];
+    const container = document.getElementById('edit-additional-images-container');
+    
+    if (container) {
+      const urlInputs = container.querySelectorAll('.additional-image-url');
+      urlInputs.forEach(input => {
+        const url = input.value?.trim();
+        if (url && url !== 'recursos/lunilogo.png') {
+          additionalImages.push(url);
+        }
+      });
+    }
+    
+    return additionalImages;
+  }
+
+  /**
+   * Mostrar vista previa profesional del producto en edición
+   */
+  showEditProductPreview(productId) {
+    console.log('👁️ Mostrando vista previa profesional del producto:', productId);
+    
+    // Recopilar datos del formulario
+    const name = document.getElementById('edit-product-name')?.value?.trim() || 'Producto Sin Nombre';
+    const price = parseFloat(document.getElementById('edit-product-price')?.value || 0);
+    const mainImage = document.getElementById('edit-product-image-url')?.value?.trim() || 'recursos/lunilogo.png';
+    const description = document.getElementById('edit-product-description')?.value?.trim() || 'Sin descripción';
+    const additionalImages = this.collectEditProductImages();
+    
+    // Crear array completo de imágenes (principal + adicionales)
+    const allImages = [mainImage, ...additionalImages].filter(img => img && img.trim());
+    
+    this.showProfessionalPreview({
+      name,
+      price,
+      description,
+      images: allImages,
+      isEdit: true,
+      productId
+    });
+  }
+
+  /**
+   * Mostrar modal de vista previa profesional tipo Amazon
+   */
+  showProfessionalPreview(productData) {
+    console.log('🎭 Mostrando vista previa profesional:', productData);
+    
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById('professional-preview-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'professional-preview-modal';
+    modal.className = 'modal professional-preview-modal';
+    modal.innerHTML = `
+      <div class="modal-content professional-preview-content">
+        <div class="preview-header">
+          <h3><i class="fas fa-eye"></i> Vista Previa Profesional</h3>
+          <button class="modal-close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="preview-body">
+          <div class="preview-gallery-section">
+            <div class="main-image-container">
+              <img id="preview-main-image" src="${productData.images[0] || 'recursos/lunilogo.png'}" alt="${productData.name}">
+              <div class="image-counter">
+                <span id="preview-image-counter">1 / ${productData.images.length}</span>
+              </div>
+              <div class="gallery-navigation">
+                <button class="nav-btn prev-btn" onclick="adminPanel.switchPreviewImage(-1)" ${
+                  productData.images.length <= 1 ? 'style="display: none"' : ''
+                }>
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="nav-btn next-btn" onclick="adminPanel.switchPreviewImage(1)" ${
+                  productData.images.length <= 1 ? 'style="display: none"' : ''
+                }>
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="thumbnails-container" ${
+              productData.images.length <= 1 ? 'style="display: none"' : ''
+            }>
+              ${productData.images.map((image, index) => `
+                <img class="thumbnail ${index === 0 ? 'active' : ''}" 
+                     src="${image}" 
+                     alt="Vista ${index + 1}"
+                     onclick="adminPanel.selectPreviewImage(${index})">
+              `).join('')}
+            </div>
+          </div>
+          
+          <div class="preview-info-section">
+            <div class="product-preview-info">
+              <h4>${productData.name}</h4>
+              <div class="price-preview">
+                <span class="currency">$</span>
+                <span class="amount">${productData.price?.toLocaleString('es-CO') || '0'}</span>
+              </div>
+              <div class="description-preview">
+                <h5>Descripción:</h5>
+                <p>${productData.description}</p>
+              </div>
+              <div class="images-info">
+                <h5>Galería de Imágenes:</h5>
+                <p><i class="fas fa-images"></i> ${productData.images.length} imagen${productData.images.length !== 1 ? 's' : ''} disponible${productData.images.length !== 1 ? 's' : ''}</p>
+                <div class="images-list">
+                  ${productData.images.map((img, index) => `
+                    <div class="image-item">
+                      <i class="fas fa-image"></i>
+                      <span>Imagen ${index + 1}${index === 0 ? ' (Principal)' : ''}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+            
+            <div class="preview-actions">
+              <div class="simulation-note">
+                <i class="fas fa-info-circle"></i>
+                Esta es una simulación de cómo se verá tu producto en el catálogo
+              </div>
+              <button class="btn btn-success" onclick="this.parentElement.parentElement.parentElement.parentElement.parentElement.remove()">
+                <i class="fas fa-check"></i> ¡Se Ve Perfecto!
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.style.display = 'flex';
+    
+    // Inicializar datos del modal
+    this.currentPreviewIndex = 0;
+    this.previewImages = productData.images;
+    
+    // Auto-cerrar al hacer clic fuera del contenido
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  /**
+   * Cambiar imagen en la vista previa (navegación con flechas)
+   */
+  switchPreviewImage(direction) {
+    if (!this.previewImages || this.previewImages.length <= 1) return;
+    
+    this.currentPreviewIndex = (this.currentPreviewIndex + direction + this.previewImages.length) % this.previewImages.length;
+    this.updatePreviewImage();
+  }
+  
+  /**
+   * Seleccionar imagen específica desde thumbnail
+   */
+  selectPreviewImage(index) {
+    if (!this.previewImages || index < 0 || index >= this.previewImages.length) return;
+    
+    this.currentPreviewIndex = index;
+    this.updatePreviewImage();
+  }
+  
+  /**
+   * Actualizar imagen principal y thumbnails en vista previa
+   */
+  updatePreviewImage() {
+    const mainImage = document.getElementById('preview-main-image');
+    const counter = document.getElementById('preview-image-counter');
+    const thumbnails = document.querySelectorAll('#professional-preview-modal .thumbnail');
+    
+    if (mainImage && this.previewImages) {
+      mainImage.src = this.previewImages[this.currentPreviewIndex];
+    }
+    
+    if (counter && this.previewImages) {
+      counter.textContent = `${this.currentPreviewIndex + 1} / ${this.previewImages.length}`;
+    }
+    
+    // Actualizar thumbnails activos
+    thumbnails.forEach((thumb, index) => {
+      thumb.classList.toggle('active', index === this.currentPreviewIndex);
+    });
+  }
+
   async updateProductFromModal(productId) {
     console.log('💾 Actualizando producto desde modal:', productId);
     
@@ -1607,6 +2022,9 @@ class AdminPanel {
         return;
       }
       
+      // Recopilar imágenes adicionales
+      const additionalImages = this.collectEditProductImages();
+      
       await productManager.initialize();
       
       const productData = {
@@ -1616,6 +2034,7 @@ class AdminPanel {
         color: color || 'Variado',
         size: size || 'Mediano',
         image: image || 'recursos/lunilogo.png',
+        additional_images: additionalImages.length > 0 ? JSON.stringify(additionalImages) : null,
         stock,
         description: description || '',
         available
@@ -1882,13 +2301,17 @@ class AdminPanel {
       
       await productManager.initialize();
       
+      // Recolectar todas las imágenes del formulario
+      const productImages = this.collectProductImages();
+      
       const productData = {
         name,
         category,
         price,
         color: color || 'Variado',
         size: size || 'Mediano',
-        image: image || 'recursos/lunilogo.png',
+        image: image || 'recursos/lunilogo.png', // Imagen principal para compatibilidad
+        images: productImages, // Array completo de imágenes
         stock,
         description: description || '',
         available
@@ -2098,6 +2521,146 @@ class AdminPanel {
       }
     } catch (error) {
       console.error('❌ Error cargando categorías en select:', error);
+    }
+  }
+
+  // ===== GESTIÓN DE MÚLTIPLES IMÁGENES =====
+  addAdditionalImageField() {
+    const container = document.getElementById('additional-images-list');
+    if (!container) return;
+    
+    const currentImages = container.querySelectorAll('.additional-image-item').length;
+    if (currentImages >= 4) {
+      alert('Máximo 4 imágenes adicionales permitidas');
+      return;
+    }
+    
+    const imageId = `additional-image-${Date.now()}`;
+    const imageItem = document.createElement('div');
+    imageItem.className = 'additional-image-item';
+    imageItem.innerHTML = `
+      <div class="additional-image-wrapper">
+        <div class="image-preview-small">
+          <img id="${imageId}-preview" src="recursos/lunilogo.png" alt="Preview">
+        </div>
+        <div class="image-controls">
+          <label for="${imageId}-input" class="btn btn-small btn-upload">
+            <i class="fas fa-upload"></i> Subir
+          </label>
+          <input type="file" id="${imageId}-input" accept="image/*" style="display: none;">
+          <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.parentElement.parentElement.remove()">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        <input type="text" class="additional-image-url" placeholder="URL de imagen" readonly>
+      </div>
+    `;
+    
+    container.appendChild(imageItem);
+    
+    // Configurar event listener para la nueva imagen
+    const newInput = document.getElementById(`${imageId}-input`);
+    if (newInput) {
+      newInput.addEventListener('change', (e) => this.handleAdditionalImageUpload(e, imageId));
+    }
+  }
+  
+  async handleAdditionalImageUpload(event, imageId) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showNotification('Error: Solo se permiten archivos de imagen (JPG, PNG, WEBP, GIF)', 'error');
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.showNotification('Error: La imagen debe ser menor a 5MB', 'error');
+      return;
+    }
+
+    this.showNotification('Subiendo imagen adicional...', 'info');
+
+    try {
+      // Mostrar preview inmediatamente
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById(`${imageId}-preview`);
+        if (preview) {
+          preview.src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Subir a Cloudinary
+      const cloudinary = new CloudinaryUploader();
+      const result = await cloudinary.uploadImage(file);
+      
+      if (result.success) {
+        // Actualizar el campo de URL
+        const urlInput = event.target.parentElement.parentElement.querySelector('.additional-image-url');
+        if (urlInput) {
+          urlInput.value = result.url;
+        }
+        
+        // Actualizar preview con la URL de Cloudinary
+        const preview = document.getElementById(`${imageId}-preview`);
+        if (preview) {
+          preview.src = result.url;
+        }
+        
+        this.showNotification('✅ Imagen adicional subida exitosamente', 'success');
+      } else {
+        this.showNotification('❌ Error al subir imagen adicional', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error subiendo imagen adicional:', error);
+      this.showNotification('❌ Error al subir imagen adicional: ' + error.message, 'error');
+    }
+  }
+
+  // Función para recolectar todas las imágenes del producto
+  collectProductImages() {
+    const images = [];
+    
+    // Imagen principal
+    const mainImageUrl = document.getElementById('product-image-url')?.value?.trim();
+    if (mainImageUrl) {
+      images.push({
+        url: mainImageUrl,
+        primary: true
+      });
+    }
+    
+    // Imágenes adicionales
+    const additionalImages = document.querySelectorAll('.additional-image-url');
+    additionalImages.forEach((input, index) => {
+      const url = input.value.trim();
+      if (url) {
+        images.push({
+          url: url,
+          primary: false
+        });
+      }
+    });
+    
+    return images;
+  }
+
+  // Función auxiliar para actualizar filtros después de cambios
+  async updateCategoryFilters() {
+    try {
+      console.log('🔄 Actualizando filtros de categoría...');
+      if (typeof window.generateCategoryFilters === 'function') {
+        await window.generateCategoryFilters();
+        console.log('✅ Filtros actualizados exitosamente');
+      }
+    } catch (error) {
+      console.warn('⚠️ No se pudieron actualizar los filtros:', error);
     }
   }
 
