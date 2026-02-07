@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Categorías - Luni Hair Clips</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Funcionalidad de Categorías</h1>
+    <p>Esta página permite verificar que el sistema de categorías funciona correctamente.</p>
+
+    <div class="test-section">
+        <h3>1. Verificar Conexión con Supabase</h3>
+        <button onclick="testSupabaseConnection()">🔗 Test Conexión</button>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Cargar Categorías Existentes</h3>
+        <button onclick="testLoadCategories()">📁 Cargar Categorías</button>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Crear Categoría de Prueba</h3>
+        <button onclick="testCreateCategory()">➕ Crear Categoría Test</button>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Verificar Funciones de Admin Panel</h3>
+        <button onclick="testAdminPanelFunctions()">🔧 Test Admin Panel</button>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Simular Click en Botones de Categoría</h3>
+        <button onclick="testCategoryButtons()">🖱️ Test Botones</button>
+    </div>
+
+    <div id="results">
+        <p>Los resultados de las pruebas aparecerán aquí...</p>
+    </div>
+
+    <!-- Scripts del sistema -->
+    <script src="js/env-config.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        let output = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            output.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            output.innerHTML = '<p><strong>Iniciando pruebas...</strong></p>';
+        }
+
+        async function testSupabaseConnection() {
+            clearLog();
+            log('🔄 Verificando conexión con Supabase...');
+            
+            try {
+                if (typeof supabase === 'undefined') {
+                    log('❌ ERROR: supabase no está definido', 'error');
+                    return;
+                }
+                
+                log('✅ supabase está disponible', 'success');
+                
+                // Test de conexión básica
+                const { data, error } = await supabase.from('categories').select('count');
+                
+                if (error) {
+                    log(`❌ Error conectando a la tabla categories: ${error.message}`, 'error');
+                } else {
+                    log('✅ Conexión con tabla categories exitosa', 'success');
+                }
+                
+            } catch (error) {
+                log(`❌ Error en test de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLoadCategories() {
+            clearLog();
+            log('📁 Probando carga de categorías...');
+            
+            try {
+                if (typeof categoryManager === 'undefined') {
+                    log('❌ ERROR: categoryManager no está definido', 'error');
+                    return;
+                }
+                
+                log('✅ categoryManager está disponible', 'success');
+                
+                await categoryManager.initialize();
+                log('✅ categoryManager inicializado', 'success');
+                
+                const categories = categoryManager.getCategories();
+                log(`📊 Categorías encontradas: ${categories.length}`, categories.length > 0 ? 'success' : 'warning');
+                
+                categories.forEach((cat, index) => {
+                    log(`${index + 1}. ${cat.icon || '📁'} ${cat.name} (${cat.slug}) - ${cat.active ? 'Activa' : 'Inactiva'}`);
+                });
+                
+            } catch (error) {
+                log(`❌ Error cargando categorías: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateCategory() {
+            clearLog();
+            log('➕ Probando creación de categoría...');
+            
+            try {
+                await categoryManager.initialize();
+                
+                const testCategory = {
+                    name: `Test Category ${Date.now()}`,
+                    slug: `test-category-${Date.now()}`,
+                    icon: '🧪',
+                    active: true
+                };
+                
+                log(`Creando categoría: ${testCategory.name}`);
+                
+                const result = await categoryManager.addCategory(testCategory);
+                
+                if (result) {
+                    log('✅ Categoría creada exitosamente', 'success');
+                    
+                    // Verificar que se creó
+                    await categoryManager.initialize();
+                    const categories = categoryManager.getCategories();
+                    const created = categories.find(cat => cat.slug === testCategory.slug);
+                    
+                    if (created) {
+                        log('✅ Categoría encontrada en la base de datos', 'success');
+                        log(`ID: ${created.id}, Nombre: ${created.name}`);
+                    } else {
+                        log('⚠️ Categoría no encontrada después de crear', 'warning');
+                    }
+                } else {
+                    log('❌ Error al crear categoría', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error en test de creación: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminPanelFunctions() {
+            clearLog();
+            log('🔧 Probando funciones del Admin Panel...');
+            
+            try {
+                if (typeof adminPanel === 'undefined') {
+                    log('❌ ERROR: adminPanel no está definido', 'error');
+                    return;
+                }
+                
+                log('✅ adminPanel está disponible', 'success');
+                
+                // Verificar funciones críticas
+                const functions = [
+                    'loadCategoriesList',
+                    'editCategory', 
+                    'deleteCategory',
+                    'saveCategory',
+                    'showAddCategoryForm'
+                ];
+                
+                functions.forEach(func => {
+                    if (typeof adminPanel[func] === 'function') {
+                        log(`✅ Función ${func} está disponible`, 'success');
+                    } else {
+                        log(`❌ Función ${func} NO está disponible`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Error verificando admin panel: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCategoryButtons() {
+            clearLog();
+            log('🖱️ Simulando clicks en botones...');
+            
+            try {
+                // Simular que tenemos categorías cargadas
+                await categoryManager.initialize();
+                const categories = categoryManager.getCategories();
+                
+                if (categories.length === 0) {
+                    log('⚠️ No hay categorías para probar botones', 'warning');
+                    return;
+                }
+                
+                const testCategory = categories[0];
+                log(`Probando con categoría: ${testCategory.name} (${testCategory.slug})`);
+                
+                // Test función editar
+                log('🔄 Probando función editCategory...');
+                try {
+                    // Esto simularía el click en "Editar"
+                    const editTest = adminPanel.editCategory(testCategory.slug);
+                    if (editTest instanceof Promise) {
+                        await editTest;
+                    }
+                    log('✅ Función editCategory ejecutada sin errores', 'success');
+                } catch (error) {
+                    log(`❌ Error en editCategory: ${error.message}`, 'error');
+                }
+                
+                // Test función eliminar (sin confirmar)
+                log('🔄 Probando función deleteCategory...');
+                try {
+                    // Mockear confirm para que retorne false (no eliminar)
+                    const originalConfirm = window.confirm;
+                    window.confirm = () => false;
+                    
+                    const deleteTest = adminPanel.deleteCategory(testCategory.slug);
+                    if (deleteTest instanceof Promise) {
+                        await deleteTest;
+                    }
+                    log('✅ Función deleteCategory ejecutada sin errores (cancelada)', 'success');
+                    
+                    // Restaurar confirm
+                    window.confirm = originalConfirm;
+                } catch (error) {
+                    log(`❌ Error en deleteCategory: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error en test de botones: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-ejecutar test básico al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Página de test cargada. Ejecute las pruebas usando los botones.', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
