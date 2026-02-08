@@ -3979,7 +3979,9 @@ class AdminPanel {
               </div>
               <div class="description-preview">
                 <h5>Descripción:</h5>
-                <p>${productData.description}</p>
+                <ul class="product-description-list">
+                  ${productData.description.split(/\r?\n|\r/).filter(line => line.trim()).map(line => `<li>${line.trim()}</li>`).join('')}
+                </ul>
               </div>
               <div class="images-info">
                 <h5>Galería de Imágenes:</h5>

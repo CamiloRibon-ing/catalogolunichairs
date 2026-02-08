@@ -263,7 +263,15 @@ function updateModalContent(product) {
     const descriptionElement = document.getElementById('modal-product-description');
     if (descriptionElement) {
       const description = product.description || 'Producto de alta calidad diseñado para brindar comodidad y estilo. Perfecto para cualquier ambiente.';
-      descriptionElement.innerHTML = `<p>${description}</p>`;
+      // Render as bullet list with emoji, split by line breaks
+      const descItems = description.split(/\r?\n|<br\s*\/?>/).filter(line => line.trim());
+      if (descItems.length > 1) {
+        descriptionElement.innerHTML = `<ul class="product-description-list">` +
+          descItems.map(item => `<li>${item.trim()}</li>`).join('') +
+          `</ul>`;
+      } else {
+        descriptionElement.innerHTML = `<p>${description}</p>`;
+      }
     }
     
     // Botón de agregar al carrito y selector de cantidad
