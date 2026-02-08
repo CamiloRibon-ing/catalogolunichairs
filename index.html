@@ -38,6 +38,9 @@
         🔄 Inicializando sistema de facturación...
     </div>
 
+    <!-- Contenedor fijo para notificaciones admin/toast -->
+    <div id="admin-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 20001; pointer-events: none;"></div>
+
     <!-- HEADER PROFESIONAL -->
     <header class="main-header">
         <div class="header-content">
@@ -710,7 +713,7 @@
         
         // Función global para filtrar órdenes (disponible inmediatamente)
         window.filterOrders = async function(status) {
-            console.log('🔍 Filtrando órdenes por estado:', status);
+            // console.log('🔍 Filtrando órdenes por estado:', status);
             
             try {
                 // Actualizar botones de filtro
@@ -721,16 +724,16 @@
                 const activeBtn = document.querySelector(`.filter-status[data-status="${status}"]`);
                 if (activeBtn) {
                     activeBtn.classList.add('active');
-                    console.log('✅ Botón de filtro activado:', status);
+                    // console.log('✅ Botón de filtro activado:', status);
                 }
                 
                 // Cargar órdenes filtradas
                 if (typeof adminPanel !== 'undefined' && adminPanel.loadOrdersList) {
                     await adminPanel.loadOrdersList(status);
                     adminPanel.updateOrdersStats();
-                    console.log('✅ Órdenes filtradas cargadas para estado:', status);
+                    // console.log('✅ Órdenes filtradas cargadas para estado:', status);
                 } else {
-                    console.warn('⚠️ adminPanel no disponible aún, reintentando...');
+                    // console.warn('⚠️ adminPanel no disponible aún, reintentando...');
                     // Reintentar después de un momento
                     setTimeout(() => {
                         if (typeof adminPanel !== 'undefined') {
@@ -740,7 +743,7 @@
                     }, 1000);
                 }
             } catch (error) {
-                console.error('❌ Error filtrando órdenes:', error);
+                // console.error('❌ Error filtrando órdenes:', error);
                 alert('Error filtrando órdenes: ' + error.message);
             }
         };
@@ -757,7 +760,7 @@
                 invoiceGeneratorReady: window.invoiceGenerator?.isReady || false
             };
             
-            console.log('🔍 Estado de inicialización completo:', status);
+            // console.log('🔍 Estado de inicialización completo:', status);
             
             let message = '🔍 DEBUG INICIALIZACIÓN:\n\n';
             message += `📋 invoiceGenerator: ${status.invoiceGenerator ? '✅ OK' : '❌ NO DISPONIBLE'}\n`;
@@ -783,11 +786,12 @@
         };
         
         console.log('✅ Función filterOrders inicializada globalmente');
+        // console.log('✅ Función filterOrders inicializada globalmente');
     </script>
     
     <!-- ================= INICIALIZACIÓN PRINCIPAL ================= -->
     <script>
-        console.log('📱 Iniciando sistema de inicialización...');
+        // console.log('📱 Iniciando sistema de inicialización...');
         
         // Variables globales para tracking de inicialización
         let initializationStatus = {
@@ -826,7 +830,7 @@
         function markAsLoaded(component) {
             initializationStatus[component] = true;
             updateLoadingStatus();
-            console.log(`✅ ${component} cargado correctamente`);
+            // console.log(`✅ ${component} cargado correctamente`);
             checkAllLoaded();
         }
         
@@ -838,7 +842,7 @@
                 
             if (allLoaded && !initializationStatus.complete) {
                 initializationStatus.complete = true;
-                console.log('🎉 ¡Todos los componentes cargados exitosamente!');
+                // console.log('🎉 ¡Todos los componentes cargados exitosamente!');
                 
                 // Disparar evento personalizado para notificar que todo está listo
                 window.dispatchEvent(new CustomEvent('appFullyLoaded'));
@@ -847,7 +851,7 @@
         
         // Listener para cuando todo esté completamente cargado
         window.addEventListener('appFullyLoaded', function() {
-            console.log('🚀 Aplicación completamente inicializada y lista para usar');
+            // console.log('🚀 Aplicación completamente inicializada y lista para usar');
             
             // Mostrar mensaje final y ocultar indicador
             const loadingElement = document.getElementById('loading-status');
@@ -862,7 +866,7 @@
 
         // DOMContentLoaded principal
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏁 DOM cargado, iniciando componentes...');
+            // console.log('🏁 DOM cargado, iniciando componentes...');
             
             // Función para verificar e inicializar componentes
             function initializeComponents() {
@@ -872,7 +876,7 @@
                         markAsLoaded('jsPDF');
                     }
                 } else {
-                    console.warn('⚠️ jsPDF no disponible aún...');
+                    // console.warn('⚠️ jsPDF no disponible aún...');
                 }
                 
                 // Verificar Supabase
@@ -889,9 +893,9 @@
                             window.orderManager = new OrderManager();
                         }
                         markAsLoaded('orderManager');
-                        console.log('📦 OrderManager inicializado');
+                        // console.log('📦 OrderManager inicializado');
                     } catch (error) {
-                        console.error('❌ Error inicializando OrderManager:', error);
+                        // console.error('❌ Error inicializando OrderManager:', error);
                     }
                 }
                 
@@ -902,9 +906,9 @@
                             window.adminPanel = new AdminPanel();
                         }
                         markAsLoaded('adminPanel');
-                        console.log('👨‍💼 AdminPanel inicializado');
+                        // console.log('👨‍💼 AdminPanel inicializado');
                     } catch (error) {
-                        console.error('❌ Error inicializando AdminPanel:', error);
+                        // console.error('❌ Error inicializando AdminPanel:', error);
                     }
                 }
                 
@@ -914,7 +918,7 @@
                         window.initializeInvoiceGenerator();
                         markAsLoaded('invoiceGenerator');
                     } catch (error) {
-                        console.error('❌ Error inicializando InvoiceGenerator:', error);
+                        // console.error('❌ Error inicializando InvoiceGenerator:', error);
                     }
                 }
             }
@@ -930,14 +934,14 @@
                 
                 if (checkCount >= 10 || initializationStatus.complete) {
                     clearInterval(checkInterval);
-                    console.log('🔚 Finalizado proceso de inicialización');
+                    // console.log('🔚 Finalizado proceso de inicialización');
                 }
             }, 500);
         });
         
         // Función auxiliar para forzar reinicialización si es necesario
         window.forceReinitialize = function() {
-            console.log('🔄 Forzando reinicialización...');
+            // console.log('🔄 Forzando reinicialización...');
             
             // Reiniciar status
             Object.keys(initializationStatus).forEach(key => {

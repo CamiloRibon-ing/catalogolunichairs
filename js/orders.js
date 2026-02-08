@@ -7,73 +7,71 @@ class OrderManager {
   }
 
   async init() {
-    console.log('🔧 Inicializando OrderManager con Supabase...');
+    // console.log('🔧 Inicializando OrderManager con Supabase...');
     await this.loadOrders();
   }
 
   async loadOrders() {
     try {
       this.isLoading = true;
-      console.log('📥 Cargando órdenes desde Supabase...');
+        // console.log('📥 Cargando órdenes desde Supabase...');
       
       // Verificar si supabaseClient está disponible
       if (typeof supabaseClient === 'undefined') {
-        console.warn('⚠️ SupabaseClient no disponible, usando localStorage');
+          // console.warn('⚠️ SupabaseClient no disponible, usando localStorage');
         return this.loadOrdersFromLocalStorage();
       }
 
-      console.log('🔗 Conectando a Supabase...');
-      console.log('🔍 supabaseClient:', typeof supabaseClient, supabaseClient);
       
       // Hacer la consulta con debug detallado
-      console.log('📊 Ejecutando consulta a tabla "orders"...');
+        // console.log('📊 Ejecutando consulta a tabla "orders"...');
       const { data, error, count } = await supabaseClient
         .from('orders')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
 
-      console.log('📋 Resultado de consulta:');
-      console.log('  - Data:', data);
-      console.log('  - Error:', error);
-      console.log('  - Count:', count);
-      console.log('  - Data length:', data?.length);
+        // console.log('📋 Resultado de consulta:');
+        // console.log('  - Data:', data);
+        // console.log('  - Error:', error);
+        // console.log('  - Count:', count);
+        // console.log('  - Data length:', data?.length);
 
       if (error) {
-        console.error('❌ Error cargando órdenes desde Supabase:', error);
-        console.error('   - Error code:', error.code);
-        console.error('   - Error message:', error.message);
-        console.error('   - Error details:', error.details);
-        console.log('🔄 Usando fallback a localStorage...');
+          // console.error('❌ Error cargando órdenes desde Supabase:', error);
+          // console.error('   - Error code:', error.code);
+          // console.error('   - Error message:', error.message);
+          // console.error('   - Error details:', error.details);
+          // console.log('🔄 Usando fallback a localStorage...');
         return this.loadOrdersFromLocalStorage();
       }
 
       this.orders = data || [];
-      console.log('✅ Órdenes cargadas desde Supabase:', this.orders.length);
+        // console.log('✅ Órdenes cargadas desde Supabase:', this.orders.length);
       
       // Debug de cada orden
       if (this.orders.length > 0) {
-        console.log('🔍 Muestra de primera orden:', this.orders[0]);
-        console.log('📝 Estructura de la orden:');
-        console.log('   - ID:', this.orders[0].id);
-        console.log('   - Order Number:', this.orders[0].order_number);
-        console.log('   - Customer Info:', this.orders[0].customer_info);
-        console.log('   - Status:', this.orders[0].status);
-        console.log('   - Created At:', this.orders[0].created_at);
+          // console.log('🔍 Muestra de primera orden:', this.orders[0]);
+          // console.log('📝 Estructura de la orden:');
+          // console.log('   - ID:', this.orders[0].id);
+          // console.log('   - Order Number:', this.orders[0].order_number);
+          // console.log('   - Customer Info:', this.orders[0].customer_info);
+          // console.log('   - Status:', this.orders[0].status);
+          // console.log('   - Created At:', this.orders[0].created_at);
       }
       
       // También guardar en localStorage como backup
       if (this.orders.length > 0) {
         localStorage.setItem('luni_orders_backup', JSON.stringify(this.orders));
-        console.log('💾 Backup guardado en localStorage');
+          // console.log('💾 Backup guardado en localStorage');
       }
       
       return this.orders;
     } catch (error) {
-      console.error('❌ Error conectando con Supabase:', error);
-      console.error('   - Error name:', error.name);
-      console.error('   - Error message:', error.message);
-      console.error('   - Error stack:', error.stack);
-      console.log('🔄 Usando fallback a localStorage...');
+        // console.error('❌ Error conectando con Supabase:', error);
+        // console.error('   - Error name:', error.name);
+        // console.error('   - Error message:', error.message);
+        // console.error('   - Error stack:', error.stack);
+        // console.log('🔄 Usando fallback a localStorage...');
       return this.loadOrdersFromLocalStorage();
     } finally {
       this.isLoading = false;
@@ -81,17 +79,17 @@ class OrderManager {
   }
 
   loadOrdersFromLocalStorage() {
-    console.log('📦 Cargando órdenes desde localStorage (fallback)...');
+      // console.log('📦 Cargando órdenes desde localStorage (fallback)...');
     
     // Intentar cargar desde localStorage principal
     let stored = localStorage.getItem('luni_orders');
     if (stored) {
       try {
         this.orders = JSON.parse(stored);
-        console.log('✅ Órdenes cargadas desde localStorage principal:', this.orders.length);
+          // console.log('✅ Órdenes cargadas desde localStorage principal:', this.orders.length);
         return this.orders;
       } catch (error) {
-        console.error('❌ Error parseando localStorage principal:', error);
+          // console.error('❌ Error parseando localStorage principal:', error);
       }
     }
 
@@ -100,22 +98,22 @@ class OrderManager {
     if (stored) {
       try {
         this.orders = JSON.parse(stored);
-        console.log('✅ Órdenes cargadas desde backup:', this.orders.length);
+          // console.log('✅ Órdenes cargadas desde backup:', this.orders.length);
         return this.orders;
       } catch (error) {
-        console.error('❌ Error parseando backup:', error);
+          // console.error('❌ Error parseando backup:', error);
       }
     }
 
     // Si no hay nada, inicializar vacío
-    console.log('📭 No se encontraron órdenes en localStorage');
+      // console.log('📭 No se encontraron órdenes en localStorage');
     this.orders = [];
     return this.orders;
   }
 
   async saveOrder(order) {
     try {
-      console.log('💾 Guardando orden en Supabase:', order.order_number);
+        // console.log('💾 Guardando orden en Supabase:', order.order_number);
       
       const { data, error } = await supabaseClient
         .from('orders')
@@ -124,16 +122,16 @@ class OrderManager {
         .single();
 
       if (error) {
-        console.error('❌ Error guardando en Supabase:', error);
+          // console.error('❌ Error guardando en Supabase:', error);
         // Fallback a localStorage
         this.saveOrderToLocalStorage(order);
         return order;
       }
 
-      console.log('✅ Orden guardada en Supabase:', data.id);
+        // console.log('✅ Orden guardada en Supabase:', data.id);
       return data;
     } catch (error) {
-      console.error('❌ Error conectando con Supabase:', error);
+        // console.error('❌ Error conectando con Supabase:', error);
       // Fallback a localStorage
       this.saveOrderToLocalStorage(order);
       return order;
@@ -141,7 +139,7 @@ class OrderManager {
   }
 
   saveOrderToLocalStorage(order) {
-    console.log('📦 Guardando en localStorage (fallback)');
+      // console.log('📦 Guardando en localStorage (fallback)');
     const stored = localStorage.getItem('luni_orders');
     const orders = stored ? JSON.parse(stored) : [];
     orders.unshift(order);
@@ -180,13 +178,13 @@ class OrderManager {
     // Agregar al cache local
     this.orders.unshift(savedOrder);
     
-    console.log('✅ Orden creada:', savedOrder.order_number);
+      // console.log('✅ Orden creada:', savedOrder.order_number);
     return savedOrder;
   }
 
   async updateOrderStatus(orderId, newStatus) {
     try {
-      console.log('🔄 Actualizando estado de orden:', orderId, 'a', newStatus);
+        // console.log('🔄 Actualizando estado de orden:', orderId, 'a', newStatus);
       
       const { data, error } = await supabaseClient
         .from('orders')
@@ -199,7 +197,7 @@ class OrderManager {
         .single();
 
       if (error) {
-        console.error('❌ Error actualizando estado:', error);
+          // console.error('❌ Error actualizando estado:', error);
         // Fallback a cache local
         return this.updateOrderStatusLocal(orderId, newStatus);
       }
@@ -210,10 +208,10 @@ class OrderManager {
         this.orders[orderIndex] = data;
       }
 
-      console.log('✅ Estado actualizado en Supabase');
+        // console.log('✅ Estado actualizado en Supabase');
       return data;
     } catch (error) {
-      console.error('❌ Error conectando con Supabase:', error);
+        // console.error('❌ Error conectando con Supabase:', error);
       return this.updateOrderStatusLocal(orderId, newStatus);
     }
   }
@@ -231,7 +229,7 @@ class OrderManager {
 
   async markInvoiceSent(orderId) {
     try {
-      console.log('📧 Marcando factura como enviada:', orderId);
+        // console.log('📧 Marcando factura como enviada:', orderId);
       
       const { data, error } = await supabaseClient
         .from('orders')
@@ -245,7 +243,7 @@ class OrderManager {
         .single();
 
       if (error) {
-        console.error('❌ Error marcando factura:', error);
+          // console.error('❌ Error marcando factura:', error);
         return this.markInvoiceSentLocal(orderId);
       }
 
@@ -257,7 +255,7 @@ class OrderManager {
 
       return data;
     } catch (error) {
-      console.error('❌ Error conectando con Supabase:', error);
+        // console.error('❌ Error conectando con Supabase:', error);
       return this.markInvoiceSentLocal(orderId);
     }
   }
@@ -281,7 +279,7 @@ class OrderManager {
   // Método público para guardar órdenes
   saveOrders() {
     this.saveOrdersToLocalStorage();
-    console.log('💾 Órdenes guardadas en localStorage');
+      // console.log('💾 Órdenes guardadas en localStorage');
   }
 
   getOrder(orderId) {
@@ -335,7 +333,7 @@ class OrderManager {
 }
 
 // Instancia global con inicialización inmediata
-console.log('🚀 Creando OrderManager...');
+  // console.log('🚀 Creando OrderManager...');
 const orderManager = new OrderManager();
 
 // Asegurar inicialización
@@ -345,7 +343,7 @@ if (typeof window !== 'undefined') {
   // Forzar inicialización después de que todo esté cargado
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', async () => {
-      console.log('📋 Re-inicializando OrderManager después de DOM ready...');
+        // console.log('📋 Re-inicializando OrderManager después de DOM ready...');
       await orderManager.init();
     });
   }

@@ -1,7 +1,7 @@
 // Sistema de generación de facturas
 class InvoiceGenerator {
     constructor() {
-        console.log('📋 Inicializando InvoiceGenerator...');
+        // console.log('📋 Inicializando InvoiceGenerator...');
         this.isReady = false;
         this.initializeWhenReady();
     }
@@ -14,7 +14,7 @@ class InvoiceGenerator {
         while (attempts < maxAttempts) {
             if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
                 this.isReady = true;
-                console.log('✅ InvoiceGenerator listo - jsPDF disponible');
+                // console.log('✅ InvoiceGenerator listo - jsPDF disponible');
                 return;
             }
             
@@ -23,6 +23,7 @@ class InvoiceGenerator {
         }
         
         console.error('❌ jsPDF no se cargó después de 5 segundos');
+        // console.error('❌ jsPDF no se cargó después de 5 segundos');
     }
 
     // Esperar a que jsPDF esté disponible
@@ -32,16 +33,20 @@ class InvoiceGenerator {
         }
         
         console.log('🔍 Verificando disponibilidad de jsPDF...');
+            // console.log('🔍 Verificando disponibilidad de jsPDF...');
         console.log('   - window.jspdf:', typeof window.jspdf);
+            // console.log('   - window.jspdf:', typeof window.jspdf);
         console.log('   - window.jspdf.jsPDF:', typeof window.jspdf?.jsPDF);
+            // console.log('   - window.jspdf.jsPDF:', typeof window.jspdf?.jsPDF);
         
         if (!window.jspdf || !window.jspdf.jsPDF) {
-            console.error('❌ jsPDF no está disponible');
-            console.error('   - window.jspdf:', window.jspdf);
+            // console.error('❌ jsPDF no está disponible');
+            // console.error('   - window.jspdf:', window.jspdf);
             throw new Error('jsPDF no está disponible. Verifique que la librería esté cargada correctamente.');
         }
         
         console.log('✅ jsPDF verificado y disponible');
+        // console.log('✅ jsPDF verificado y disponible');
     }
 
     // Generar PDF de la factura
@@ -247,7 +252,7 @@ class InvoiceGenerator {
             return doc;
             
         } catch (error) {
-            console.error('❌ Error generando PDF de factura:', error);
+            // console.error('❌ Error generando PDF de factura:', error);
             throw error;
         }
     }
@@ -268,8 +273,8 @@ class InvoiceGenerator {
     // Descargar PDF de factura
     async downloadPDFInvoice(order) {
         try {
-            console.log('📥 Iniciando descarga de PDF de factura...');
-            console.log('📋 Datos de orden recibidos:', order);
+            // console.log('📥 Iniciando descarga de PDF de factura...');
+            // console.log('📋 Datos de orden recibidos:', order);
             
             const doc = await this.generatePDFInvoice(order);
             if (!doc) {
@@ -280,28 +285,28 @@ class InvoiceGenerator {
             const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
             const filename = `Factura-Luni-${orderNumber}-${timestamp}.pdf`;
             
-            console.log('💾 Guardando archivo:', filename);
+            // console.log('💾 Guardando archivo:', filename);
             
             // Intentar guardar el archivo
             try {
                 doc.save(filename);
-                console.log('✅ PDF de factura guardado exitosamente:', filename);
+                // console.log('✅ PDF de factura guardado exitosamente:', filename);
                 
                 // Verificación adicional - intentar mostrar una alerta después de un momento
                 setTimeout(() => {
-                    console.log('🔍 Verificando descarga...');
-                    console.log('📁 El archivo debería aparecer en la carpeta de Descargas como:', filename);
+                    // console.log('🔍 Verificando descarga...');
+                    // console.log('📁 El archivo debería aparecer en la carpeta de Descargas como:', filename);
                 }, 500);
                 
                 return filename;
             } catch (saveError) {
-                console.error('❌ Error específico al guardar:', saveError);
+                // console.error('❌ Error específico al guardar:', saveError);
                 throw new Error(`Error al guardar PDF: ${saveError.message}`);
             }
             
         } catch (error) {
-            console.error('❌ Error descargando PDF de factura:', error);
-            console.error('🔍 Stack trace:', error.stack);
+            // console.error('❌ Error descargando PDF de factura:', error);
+            // console.error('🔍 Stack trace:', error.stack);
             throw error;
         }
     }
@@ -309,7 +314,7 @@ class InvoiceGenerator {
     // Enviar factura por WhatsApp
     async sendInvoiceByWhatsApp(order) {
         try {
-            console.log('📱 Preparando envío por WhatsApp...');
+            // console.log('📱 Preparando envío por WhatsApp...');
             
             const customerInfo = order.customerInfo || order.customer_info;
             const orderNumber = order.orderNumber || order.order_number;
@@ -353,10 +358,11 @@ class InvoiceGenerator {
             window.open(whatsappURL, '_blank');
             
             console.log('✅ WhatsApp abierto con mensaje de factura');
+                        // console.log('✅ WhatsApp abierto con mensaje de factura');
             return whatsappURL;
             
         } catch (error) {
-            console.error('❌ Error enviando por WhatsApp:', error);
+            // console.error('❌ Error enviando por WhatsApp:', error);
             throw error;
         }
     }

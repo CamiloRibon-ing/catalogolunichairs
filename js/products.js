@@ -9,36 +9,36 @@ class ProductManager {
   // Inicializar y cargar productos
   async initialize() {
     if (!this.initialized) {
-      console.log('🚀 Inicializando ProductManager - solo productos de Supabase...');
+      // console.log('🚀 Inicializando ProductManager - solo productos de Supabase...');
       
       // Cargar productos solo desde Supabase
       this.products = await this.loadProductsFromSupabase();
       this.initialized = true;
       
-      console.log(`✅ ProductManager inicializado con ${this.products.length} productos de Supabase`);
+      // console.log(`✅ ProductManager inicializado con ${this.products.length} productos de Supabase`);
     }
   }
 
   // Cargar productos desde Supabase
   async loadProductsFromSupabase() {
     try {
-      console.log('📡 Conectando a Supabase para cargar productos...');
+      // console.log('📡 Conectando a Supabase para cargar productos...');
       const { data, error } = await supabaseClient
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Error cargando productos de Supabase:', error);
+        // console.error('❌ Error cargando productos de Supabase:', error);
         return [];
       }
 
       if (!data || data.length === 0) {
-        console.log('📭 No hay productos en Supabase aún');
+        // console.log('📭 No hay productos en Supabase aún');
         return [];
       }
 
-      console.log(`✅ ${data.length} productos cargados desde Supabase`);
+      // console.log(`✅ ${data.length} productos cargados desde Supabase`);
 
       // Mapear productos de Supabase al formato local
       return data.map(product => ({
@@ -58,14 +58,14 @@ class ProductManager {
       }));
 
     } catch (error) {
-      console.error('Error conectando a Supabase para productos:', error);
+      // console.error('Error conectando a Supabase para productos:', error);
       return [];
     }
   }
 
   // Parsear imágenes de producto (soporta múltiples formatos)
   parseProductImages(product) {
-    console.log('🔍 Parseando imágenes para:', product.name, 'Campo image:', product.image);
+    // console.log('🔍 Parseando imágenes para:', product.name, 'Campo image:', product.image);
     const images = [];
     
     // Verificar si el campo image contiene JSON con múltiples imágenes
@@ -120,7 +120,7 @@ class ProductManager {
         try {
           additionalImages = JSON.parse(product.images);
         } catch (error) {
-          console.warn('⚠️ Error parsing images JSON:', error);
+          // console.warn('⚠️ Error parsing images JSON:', error);
         }
       }
       // Si ya es array, usarlo directamente
@@ -148,7 +148,7 @@ class ProductManager {
       }
     }
     
-    console.log('📷 Imágenes parseadas:', images);
+    // console.log('📷 Imágenes parseadas:', images);
     return images;
   }
 
@@ -158,13 +158,13 @@ class ProductManager {
 
   saveProducts() {
     // Ya no guardamos productos locales - todo viene de Supabase
-    console.log('ℹ️ saveProducts() - Los productos ahora se gestionan solo en Supabase');
+    // console.log('ℹ️ saveProducts() - Los productos ahora se gestionan solo en Supabase');
   }
 
   async addProduct(product) {
-    console.log('➕ Agregando producto con datos:', product);
-    console.log('📷 Imágenes recibidas:', product.images);
-    console.log('🖼️ Imagen principal:', product.image);
+    // console.log('➕ Agregando producto con datos:', product);
+    // console.log('📷 Imágenes recibidas:', product.images);
+    // console.log('🖼️ Imagen principal:', product.image);
     
     try {
       // Preparar datos para Supabase
@@ -241,7 +241,7 @@ class ProductManager {
         productData.image = 'recursos/lunilogo.png';
       }
       
-      console.log('📦 Datos finales para Supabase:', productData);
+      // console.log('📦 Datos finales para Supabase:', productData);
       
       // Agregar a Supabase
       const { data, error } = await supabaseClient
@@ -251,25 +251,25 @@ class ProductManager {
         .single();
 
       if (error) {
-        console.error('❌ Error agregando producto a Supabase:', error);
-        console.error('🔍 Detalles del error:', JSON.stringify(error, null, 2));
-        console.error('📦 Datos enviados que causaron error:', JSON.stringify(productData, null, 2));
+        // console.error('❌ Error agregando producto a Supabase:', error);
+        // console.error('🔍 Detalles del error:', JSON.stringify(error, null, 2));
+        // console.error('📦 Datos enviados que causaron error:', JSON.stringify(productData, null, 2));
         
         // Mostrar error específico si está disponible
         if (error.message) {
-          console.error('💬 Mensaje de error:', error.message);
+          // console.error('💬 Mensaje de error:', error.message);
         }
         if (error.details) {
-          console.error('📋 Detalles técnicos:', error.details);
+          // console.error('📋 Detalles técnicos:', error.details);
         }
         if (error.hint) {
-          console.error('💡 Sugerencia:', error.hint);
+          // console.error('💡 Sugerencia:', error.hint);
         }
         
         return false;
       }
 
-      console.log('✅ Producto agregado a Supabase:', data);
+      // console.log('✅ Producto agregado a Supabase:', data);
       
       // Recargar productos para mantener sincronización
       this.initialized = false; // Forzar reinicialización
@@ -277,7 +277,7 @@ class ProductManager {
       return true;
       
     } catch (error) {
-      console.error('❌ Error en addProduct:', error);
+      // console.error('❌ Error en addProduct:', error);
       return false;
     }
   }
@@ -361,11 +361,11 @@ class ProductManager {
           .single();
 
         if (error) {
-          console.error('❌ Error actualizando producto en Supabase:', error);
+          // console.error('❌ Error actualizando producto en Supabase:', error);
           return false;
         }
 
-        console.log('✅ Producto actualizado en Supabase:', data);
+        // console.log('✅ Producto actualizado en Supabase:', data);
         
         // Recargar productos para mantener sincronización
         this.initialized = false; // Forzar reinicialización
@@ -373,11 +373,11 @@ class ProductManager {
         return true;
       } else {
         // Todos los productos son de Supabase ahora
-        console.warn('⚠️ Producto no encontrado en Supabase:', id);
+        // console.warn('⚠️ Producto no encontrado en Supabase:', id);
         return false;
       }
     } catch (error) {
-      console.error('❌ Error actualizando producto:', error);
+      // console.error('❌ Error actualizando producto:', error);
       return false;
     }
   }
@@ -395,22 +395,22 @@ class ProductManager {
           .eq('id', id);
 
         if (error) {
-          console.error('❌ Error eliminando producto de Supabase:', error);
+          // console.error('❌ Error eliminando producto de Supabase:', error);
           return false;
         }
       } else {
         // Todos los productos son de Supabase ahora
-        console.warn('⚠️ Producto no encontrado en Supabase:', id);
+        // console.warn('⚠️ Producto no encontrado en Supabase:', id);
         return false;
       }
 
       // Eliminar de lista local en memoria
       this.products = this.products.filter(p => p.id !== id);
-      console.log('✅ Producto eliminado de la lista local');
+      // console.log('✅ Producto eliminado de la lista local');
       return true;
 
     } catch (error) {
-      console.error('❌ Error eliminando producto:', error);
+      // console.error('❌ Error eliminando producto:', error);
       return false;
     }
   }
@@ -486,10 +486,10 @@ const productManager = new ProductManager();
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await productManager.initialize();
-    console.log('ProductManager inicializado correctamente');
-    console.log('Productos cargados:', productManager.getAllProducts().length);
+    // console.log('ProductManager inicializado correctamente');
+    // console.log('Productos cargados:', productManager.getAllProducts().length);
   } catch (error) {
-    console.error('Error inicializando ProductManager:', error);
+    // console.error('Error inicializando ProductManager:', error);
   }
 });
 
@@ -511,13 +511,13 @@ if (typeof module !== 'undefined' && module.exports) {
 // Función para verificar conexión con Supabase
 window.testProductConnection = async function() {
   try {
-    console.log('🧪 Probando conexión de productos...');
+    // console.log('🧪 Probando conexión de productos...');
     await productManager.initialize();
     const products = productManager.getAllProducts();
-    console.log(`✅ Conexión exitosa: ${products.length} productos cargados`);
+    // console.log(`✅ Conexión exitosa: ${products.length} productos cargados`);
     return { success: true, count: products.length };
   } catch (error) {
-    console.error('❌ Error en conexión de productos:', error);
+    // console.error('❌ Error en conexión de productos:', error);
     return { success: false, error };
   }
 };
@@ -528,11 +528,11 @@ window.showProductStats = function() {
   const available = products.filter(p => p.available);
   const categories = [...new Set(products.map(p => p.category))];
   
-  console.log('📊 ESTADÍSTICAS DE PRODUCTOS:');
-  console.log(`   Total: ${products.length}`);
-  console.log(`   Disponibles: ${available.length}`);
-  console.log(`   Categorías: ${categories.length} (${categories.join(', ')})`);
-  console.log(`   Stock total: ${products.reduce((sum, p) => sum + (p.stock || 0), 0)}`);
+  // console.log('📊 ESTADÍSTICAS DE PRODUCTOS:');
+  // console.log(`   Total: ${products.length}`);
+  // console.log(`   Disponibles: ${available.length}`);
+  // console.log(`   Categorías: ${categories.length} (${categories.join(', ')})`);
+  // console.log(`   Stock total: ${products.reduce((sum, p) => sum + (p.stock || 0), 0)}`);
   
   return {
     total: products.length,

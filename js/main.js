@@ -9,11 +9,11 @@ AOS.init({ duration: 800, once: true });
 
 // ====== Renderizar catálogo de productos ======
 window.renderProductCatalog = async function() {
-  console.log('🔄 Iniciando renderizado del catálogo...');
+  //console.log('🔄 Iniciando renderizado del catálogo...');
   
   const productGrid = document.querySelector('.product-grid');
   if (!productGrid) {
-    console.error('❌ No se encontró el contenedor .product-grid');
+    //console.error('❌ No se encontró el contenedor .product-grid');
     return;
   }
 
@@ -24,7 +24,7 @@ window.renderProductCatalog = async function() {
     await productManager.initialize();
     const products = productManager.getAvailableProducts();
     
-    console.log(`📦 ${products.length} productos disponibles para renderizar`);
+    //console.log(`📦 ${products.length} productos disponibles para renderizar`);
     
     // Limpiar contenedor
     productGrid.innerHTML = '';
@@ -44,7 +44,7 @@ window.renderProductCatalog = async function() {
     // Renderizar cada producto
     products.forEach((product, index) => {
       setTimeout(() => {
-        console.log(`🏷️ Renderizando producto: ${product.name} (${product.id})`);
+        //console.log(`🏷️ Renderizando producto: ${product.name} (${product.id})`);
         
         const card = document.createElement('div');
         card.className = 'card';
@@ -52,7 +52,7 @@ window.renderProductCatalog = async function() {
         card.dataset.productId = product.id;
         card.setAttribute('data-aos', 'zoom-in');
 
-        console.log(`🏷️ Asignando categoría "${product.category}" al producto "${product.name}"`);
+        //console.log(`🏷️ Asignando categoría "${product.category}" al producto "${product.name}"`);
 
         const stockBadge = product.stock > 0 
           ? `<span class="stock-badge ${product.stock <= 5 ? 'low-stock' : ''}">Stock: ${product.stock}</span>` 
@@ -80,7 +80,7 @@ window.renderProductCatalog = async function() {
           </div>
         `;
 
-        console.log(`✅ Producto ${product.name} agregado al DOM`);
+        //console.log(`✅ Producto ${product.name} agregado al DOM`);
         productGrid.appendChild(card);
         
         // Re-inicializar AOS para las nuevas cards
@@ -90,7 +90,7 @@ window.renderProductCatalog = async function() {
       }, index * 50); // Stagger la animación
     });
 
-    console.log('✅ Catálogo renderizado exitosamente');
+    //console.log('✅ Catálogo renderizado exitosamente');
     
     // Re-inicializar filtros después de que se rendericen los productos
     setTimeout(() => {
@@ -98,7 +98,7 @@ window.renderProductCatalog = async function() {
     }, products.length * 50 + 100);
     
   } catch (error) {
-    console.error('❌ Error renderizando catálogo:', error);
+    //console.error('❌ Error renderizando catálogo:', error);
     productGrid.innerHTML = '<p style="grid-column: 1/-1; padding: 2rem; text-align: center; color: red;">❌ Error cargando productos. Reintentando...</p>';
     
     // Reintentar después de 2 segundos
@@ -112,19 +112,19 @@ window.renderProductCatalog = async function() {
 let currentModalProduct = null;
 
 window.openProductModal = async function(productId) {
-  console.log('🔍 Abriendo modal para producto:', productId);
+  //console.log('🔍 Abriendo modal para producto:', productId);
   
   try {
     // Verificar que productManager esté disponible y si no, esperar a que se inicialice
     if (!productManager || !productManager.initialized) {
-      console.log('⏳ Esperando a que ProductManager se inicialice...');
+      //console.log('⏳ Esperando a que ProductManager se inicialice...');
       await productManager.initialize();
     }
     
     const product = productManager.getProduct(productId);
     
     if (!product) {
-      console.error('❌ Producto no encontrado:', productId);
+      //console.error('❌ Producto no encontrado:', productId);
       showNotification('Producto no encontrado', 'error');
       return;
     }
@@ -139,13 +139,13 @@ window.openProductModal = async function(productId) {
     if (modal) {
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
-      console.log('✅ Modal abierto para:', product.name);
+      //console.log('✅ Modal abierto para:', product.name);
     } else {
-      console.error('❌ No se encontró el modal en el DOM');
+      //console.error('❌ No se encontró el modal en el DOM');
     }
     
   } catch (error) {
-    console.error('❌ Error abriendo modal:', error);
+    //console.error('❌ Error abriendo modal:', error);
     showNotification('Error al abrir detalles del producto', 'error');
   }
 };
@@ -162,11 +162,11 @@ window.closeProductModal = function() {
   const quantityInput = document.getElementById('modal-quantity');
   if (quantityInput) quantityInput.value = 1;
   
-  console.log('✅ Modal cerrado');
+  //console.log('✅ Modal cerrado');
 };
 
 function updateModalContent(product) {
-  console.log('🔄 Actualizando contenido del modal profesional para:', product.name);
+  //console.log('🔄 Actualizando contenido del modal profesional para:', product.name);
   
   try {
     // Galería de imágenes del modal (ahora con soporte completo para múltiples imágenes)
@@ -222,7 +222,7 @@ function updateModalContent(product) {
         `;
       }
       
-      console.log('📷 Galería del modal profesional actualizada');
+      //console.log('📷 Galería del modal profesional actualizada');
     }
     
     // Información básica
@@ -282,9 +282,9 @@ function updateModalContent(product) {
       }
     }
     
-    console.log('✅ Contenido del modal actualizado');
+    //console.log('✅ Contenido del modal actualizado');
   } catch (error) {
-    console.error('❌ Error actualizando contenido del modal:', error);
+    //console.error('❌ Error actualizando contenido del modal:', error);
   }
 }
 
@@ -301,7 +301,7 @@ window.changeModalQuantity = function(change) {
 
 window.addToCartFromModal = function() {
   if (!currentModalProduct) {
-    console.error('❌ No hay producto seleccionado');
+    //console.error('❌ No hay producto seleccionado');
     return;
   }
   
@@ -354,11 +354,11 @@ document.addEventListener('click', function(event) {
 // ====== GENERAR FILTROS DINÁMICOS ======
 async function generateCategoryFilters() {
   try {
-    console.log('🔄 Generando filtros de categoría...');
+    //console.log('🔄 Generando filtros de categoría...');
     
     const filtersContainer = document.getElementById('category-filters');
     if (!filtersContainer) {
-      console.error('❌ Contenedor de filtros no encontrado');
+      //console.error('❌ Contenedor de filtros no encontrado');
       return;
     }
     
@@ -366,7 +366,7 @@ async function generateCategoryFilters() {
     await categoryManager.initialize();
     const categories = categoryManager.getActiveCategories();
     
-    console.log(`📁 Categorías activas encontradas: ${categories.length}`);
+    //console.log(`📁 Categorías activas encontradas: ${categories.length}`);
     
     // Crear HTML para filtros
     let filtersHTML = '<button class="filter-btn active" data-category="all">Todos</button>';
@@ -380,7 +380,7 @@ async function generateCategoryFilters() {
     // Insertar en el DOM
     filtersContainer.innerHTML = filtersHTML;
     
-    console.log('✅ Filtros de categoría generados dinámicamente');
+    //console.log('✅ Filtros de categoría generados dinámicamente');
     
     // Inicializar eventos después de generar botones
     setTimeout(() => {
@@ -388,7 +388,7 @@ async function generateCategoryFilters() {
     }, 100);
     
   } catch (error) {
-    console.error('❌ Error generando filtros:', error);
+    //console.error('❌ Error generando filtros:', error);
     
     // Fallback: mostrar filtros básicos
     const filtersContainer = document.getElementById('category-filters');
@@ -517,7 +517,7 @@ function initFilters() {
   const filterBtns = document.querySelectorAll(".filter-btn");
   const cards = document.querySelectorAll(".card");
 
-  console.log(`🔍 Inicializando filtros: ${filterBtns.length} botones, ${cards.length} productos`);
+  //console.log(`🔍 Inicializando filtros: ${filterBtns.length} botones, ${cards.length} productos`);
 
   // Debug: Mostrar categorías disponibles
   debugCategories();
@@ -535,14 +535,14 @@ function initFilters() {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       const category = btn.dataset.category;
-      console.log(`📂 Filtro seleccionado: "${category}"`);
+      //console.log(`📂 Filtro seleccionado: "${category}"`);
 
       const allCards = document.querySelectorAll(".card");
       let visibleCount = 0;
 
       allCards.forEach(card => {
         const cardCategory = card.dataset.category;
-        console.log(`🏷️ Producto: categoria="${cardCategory}", filtro="${category}"`);
+        //console.log(`🏷️ Producto: categoria="${cardCategory}", filtro="${category}"`);
         
         if(category === "all" || cardCategory === category){
           card.classList.remove("hidden");
@@ -554,7 +554,7 @@ function initFilters() {
         }
       });
 
-      console.log(`👀 ${visibleCount} productos visibles después del filtro`);
+      //console.log(`👀 ${visibleCount} productos visibles después del filtro`);
 
       // Activar visualmente el botón seleccionado
       newFilterBtns.forEach(b => b.classList.remove("active"));
@@ -579,44 +579,44 @@ function debugCategories() {
   const filterBtns = document.querySelectorAll(".filter-btn");
   const cards = document.querySelectorAll(".card");
 
-  console.log("🔍 DEBUG CATEGORÍAS:");
+  //console.log("🔍 DEBUG CATEGORÍAS:");
   
   // Mostrar categorías de botones
   const buttonCategories = Array.from(filterBtns).map(btn => btn.dataset.category);
-  console.log("📱 Categorías en botones:", buttonCategories);
+  //console.log("📱 Categorías en botones:", buttonCategories);
   
   // Mostrar categorías de productos
   const productCategories = Array.from(cards).map(card => card.dataset.category);
   const uniqueProductCategories = [...new Set(productCategories)];
-  console.log("🏷️ Categorías en productos:", uniqueProductCategories);
+  //console.log("🏷️ Categorías en productos:", uniqueProductCategories);
   
   // Identificar categorías faltantes
   const missingInProducts = buttonCategories.filter(cat => cat !== 'all' && !uniqueProductCategories.includes(cat));
   const missingInButtons = uniqueProductCategories.filter(cat => !buttonCategories.includes(cat));
   
   if (missingInProducts.length > 0) {
-    console.warn("⚠️ Categorías en botones sin productos:", missingInProducts);
+    //console.warn("⚠️ Categorías en botones sin productos:", missingInProducts);
   }
   
   if (missingInButtons.length > 0) {
-    console.warn("⚠️ Categorías en productos sin botones:", missingInButtons);
+    //console.warn("⚠️ Categorías en productos sin botones:", missingInButtons);
   }
 }
 
 // ====== Agregar al carrito ======
 window.addToCart = async function(productId) {
-  console.log('🛒 Intentando agregar al carrito:', productId);
+  //console.log('🛒 Intentando agregar al carrito:', productId);
   
   // Esperar a que el carrito esté inicializado
   let attempts = 0;
   while (typeof cart === 'undefined' && attempts < 50) {
-    console.log('⏳ Esperando que el carrito se inicialice...');
+    //console.log('⏳ Esperando que el carrito se inicialice...');
     await new Promise(resolve => setTimeout(resolve, 100));
     attempts++;
   }
   
   if (typeof cart === 'undefined') {
-    console.error('❌ Cart no pudo inicializarse');
+    //console.error('❌ Cart no pudo inicializarse');
     showNotification('Sistema de carrito no disponible', 'error');
     return;
   }
@@ -625,16 +625,16 @@ window.addToCart = async function(productId) {
     await productManager.initialize();
     const product = productManager.getProduct(productId);
     if (!product) {
-      console.error('❌ Producto no encontrado:', productId);
+      //console.error('❌ Producto no encontrado:', productId);
       showNotification('Producto no encontrado', 'error');
       return;
     }
 
-    console.log('📦 Producto encontrado:', product.name);
+    //console.log('📦 Producto encontrado:', product.name);
 
     // Agregar directamente al carrito (sin modal de opciones por ahora)
     const result = cart.addItem(productId, 1);
-    console.log('🛒 Resultado de agregar al carrito:', result);
+    //console.log('🛒 Resultado de agregar al carrito:', result);
     
     if (result.success) {
       showNotification(result.message, 'success');
@@ -646,7 +646,7 @@ window.addToCart = async function(productId) {
       showNotification(result.message, 'error');
     }
   } catch (error) {
-    console.error('❌ Error en addToCart:', error);
+    //console.error('❌ Error en addToCart:', error);
     showNotification('Error al agregar el producto', 'error');
   }
 }
@@ -839,20 +839,20 @@ window.addEventListener('click', (e) => {
 
 // ====== Inicializar cuando el DOM esté listo ======
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 DOM cargado, iniciando aplicación...');
+  //console.log('🚀 DOM cargado, iniciando aplicación...');
   
   // Actualizar UI de autenticación
   if (typeof adminPanel !== 'undefined' && adminPanel) {
     adminPanel.updateAuthUI();
     adminPanel.setupHeaderListeners(); // Función que sí existe
   } else {
-    console.warn('⚠️ adminPanel no está disponible aún');
+    //console.warn('⚠️ adminPanel no está disponible aún');
     // Reintentar después de un pequeño delay
     setTimeout(() => {
       if (typeof adminPanel !== 'undefined' && adminPanel) {
         adminPanel.updateAuthUI();
         adminPanel.setupHeaderListeners();
-        console.log('✅ adminPanel inicializado con delay');
+        //console.log('✅ adminPanel inicializado con delay');
       }
     }, 100);
   }
@@ -903,41 +903,41 @@ window.generateCategoryFilters = generateCategoryFilters;
 // ====== Inicialización de la aplicación ======
 async function initializeApp() {
   try {
-    console.log('🔄 Inicializando sistemas...');
+    //console.log('🔄 Inicializando sistemas...');
     
     // Verificar que existe la grilla de productos
     const productGrid = document.querySelector('.product-grid');
     if (!productGrid) {
-      console.error('❌ No se encontró .product-grid en el DOM');
+      //console.error('❌ No se encontró .product-grid en el DOM');
       return;
     }
     
-    console.log('✅ Grilla de productos encontrada');
+    //console.log('✅ Grilla de productos encontrada');
     
     // Inicializar managers
     await categoryManager.initialize();
-    console.log('✅ CategoryManager inicializado');
+    //console.log('✅ CategoryManager inicializado');
     
     await productManager.initialize();
-    console.log('✅ ProductManager inicializado');
+    //console.log('✅ ProductManager inicializado');
     
     // Renderizar catálogo
     await renderProductCatalog();
-    console.log('✅ Catálogo renderizado');
+    //console.log('✅ Catálogo renderizado');
     
     // Generar filtros dinámicos y configurar eventos
     setTimeout(async () => {
       await generateCategoryFilters();
-      console.log('✅ Filtros dinámicos generados');
+      //console.log('✅ Filtros dinámicos generados');
     }, 200);
     
-    console.log('✅ Aplicación inicializada correctamente');
+    //console.log('✅ Aplicación inicializada correctamente');
   } catch (error) {
-    console.error('❌ Error inicializando la aplicación:', error);
+    //console.error('❌ Error inicializando la aplicación:', error);
     
     // Reintento después de 1 segundo
     setTimeout(() => {
-      console.log('🔄 Reintentando inicialización...');
+      //console.log('🔄 Reintentando inicialización...');
       initializeApp();
     }, 1000);
   }

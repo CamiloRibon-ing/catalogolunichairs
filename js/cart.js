@@ -19,9 +19,9 @@ class Cart {
     
     if (typeof productManager !== 'undefined') {
       await productManager.initialize();
-      console.log('✅ Cart inicializado con ProductManager');
+      // console.log('✅ Cart inicializado con ProductManager');
     } else {
-      console.warn('⚠️ Cart inicializado sin ProductManager (modo offline)');
+      // console.warn('⚠️ Cart inicializado sin ProductManager (modo offline)');
     }
     
     this.initialized = true;
@@ -39,27 +39,27 @@ class Cart {
   }
 
   addItem(productId, quantity = 1, color = '', size = '') {
-    console.log('🛒 cart.addItem llamado con:', { productId, quantity, color, size });
+    // console.log('🛒 cart.addItem llamado con:', { productId, quantity, color, size });
     
     // Verificar que productManager esté disponible
     if (typeof productManager === 'undefined') {
-      console.error('❌ ProductManager no está disponible');
+      // console.error('❌ ProductManager no está disponible');
       return { success: false, message: 'Sistema no inicializado correctamente' };
     }
 
     // Verificar disponibilidad
     if (!productManager.checkAvailability(productId, quantity)) {
-      console.error('❌ Producto no disponible o sin stock');
+      // console.error('❌ Producto no disponible o sin stock');
       return { success: false, message: 'Producto no disponible o sin stock suficiente' };
     }
 
     const product = productManager.getProduct(productId);
     if (!product) {
-      console.error('❌ Producto no encontrado en ProductManager');
+      // console.error('❌ Producto no encontrado en ProductManager');
       return { success: false, message: 'Producto no encontrado' };
     }
 
-    console.log('✅ Producto validado:', product.name);
+    // console.log('✅ Producto validado:', product.name);
 
     // Buscar si ya existe en el carrito
     const existingIndex = this.items.findIndex(
@@ -88,7 +88,7 @@ class Cart {
       });
     }
 
-    console.log('💾 Guardando carrito...');
+    // console.log('💾 Guardando carrito...');
     this.saveCart();
     
     // Efecto visual cuando se añade un producto
@@ -100,7 +100,7 @@ class Cart {
       }, 800);
     }
     
-    console.log('✅ Producto agregado exitosamente al carrito');
+    // console.log('✅ Producto agregado exitosamente al carrito');
     return { success: true, message: 'Producto agregado al carrito' };
   }
 
@@ -139,7 +139,7 @@ class Cart {
     return this.items.reduce((total, item) => {
       // Si productManager no está disponible, usar precio guardado o 0
       if (typeof productManager === 'undefined') {
-        console.warn('⚠️ ProductManager no disponible para calcular total');
+        // console.warn('⚠️ ProductManager no disponible para calcular total');
         return total + (item.price || 0) * item.quantity;
       }
       
@@ -159,7 +159,7 @@ class Cart {
     return this.items.map(item => {
       // Si productManager no está disponible, usar datos básicos
       if (typeof productManager === 'undefined') {
-        console.warn('⚠️ ProductManager no disponible para obtener detalles del producto');
+        // console.warn('⚠️ ProductManager no disponible para obtener detalles del producto');
         return {
           ...item,
           product: {
@@ -180,21 +180,15 @@ class Cart {
   }
 
   updateCartUI() {
-    console.log('🔄 Actualizando interfaz del carrito...');
-    
+    // console.log('🔄 Actualizando interfaz del carrito...');
     const cartCount = document.getElementById('cart-count');
     const cartBtn = document.getElementById('cart-btn');
     const cartTotal = document.getElementById('cart-total');
-    
-    console.log('🔍 Elementos encontrados:', {
-      cartCount: !!cartCount,
-      cartBtn: !!cartBtn,
-      cartTotal: !!cartTotal
-    });
+    // console.log('🔍 Elementos encontrados:', { cartCount: !!cartCount, cartBtn: !!cartBtn, cartTotal: !!cartTotal });
     
     if (cartCount) {
       const count = this.getItemCount();
-      console.log('📊 Actualizando contador a:', count);
+      // console.log('📊 Actualizando contador a:', count);
       cartCount.textContent = count;
       cartCount.style.display = count > 0 ? 'flex' : 'none';
       
@@ -207,19 +201,19 @@ class Cart {
         }
       }
     } else {
-      console.error('❌ Elemento cart-count no encontrado');
+      // console.error('❌ Elemento cart-count no encontrado');
     }
 
     // Actualizar total si el carrito está visible
     if (cartTotal) {
       const total = this.getTotal();
-      console.log('💰 Actualizando total a:', total);
+      // console.log('💰 Actualizando total a:', total);
       cartTotal.textContent = `$${total.toLocaleString('es-CO')}`;
     } else {
-      console.warn('⚠️ Elemento cart-total no encontrado (puede ser normal si el modal está cerrado)');
+      // console.warn('⚠️ Elemento cart-total no encontrado (puede ser normal si el modal está cerrado)');
     }
     
-    console.log('✅ Interfaz del carrito actualizada');
+    // console.log('✅ Interfaz del carrito actualizada');
   }
 }
 
@@ -230,7 +224,7 @@ let cart;
 function initializeCart() {
   if (!cart && document.readyState !== 'loading') {
     cart = new Cart();
-    console.log('🛒 Carrito inicializado');
+    // console.log('🛒 Carrito inicializado');
   }
 }
 
