@@ -3344,6 +3344,9 @@ class AdminPanel {
         console.log('✅ Categoría eliminada exitosamente');
         alert('✅ Categoría eliminada exitosamente');
         this.loadCategoriesList(); // Recargar lista
+        if (typeof window.generateCategoryFilters === 'function') {
+          window.generateCategoryFilters(); // Actualizar filtros dinámicos en el cliente
+        }
       } else {
         throw new Error('No se pudo eliminar la categoría');
       }
@@ -5048,34 +5051,18 @@ class AdminPanel {
 
   updateOrderStatus(orderId, newStatus) {
     console.log('💾 Actualizando estado de orden:', orderId, 'a:', newStatus);
-    
-    const orders = orderManager?.orders || [];
-    
-    // Si hay órdenes reales, actualizar la real
-    if (orders.length > 0) {
-      const orderIndex = orders.findIndex(o => o.id === orderId || o.id === parseInt(orderId));
-      
-      if (orderIndex === -1) {
-        alert('Orden no encontrada');
-        return;
-      }
-
-      // Actualizar el estado
-      orders[orderIndex].status = newStatus;
-      
-      // Guardar en localStorage si orderManager lo permite
-      if (orderManager?.saveOrders) {
-        orderManager.saveOrders();
-      }
+    if (orderManager && typeof orderManager.updateOrderStatus === 'function') {
+      orderManager.updateOrderStatus(orderId, newStatus)
+        .then(() => {
+          this.loadOrdersList(this.ordersStatusFilter || 'all', this.ordersPage || 1, this.ordersPerPage || 10);
+          alert(`Estado de la orden actualizado a: ${newStatus}`);
+        })
+        .catch((err) => {
+          alert('Error actualizando el estado: ' + (err?.message || err));
+        });
     } else {
-      // Para órdenes de ejemplo, solo simular la actualización
-      console.log('📝 Actualizando orden de ejemplo (simulado)');
+      alert('Error: orderManager no disponible');
     }
-    
-    // Actualizar la lista de órdenes
-    this.loadOrdersList(this.ordersStatusFilter || 'all', this.ordersPage || 1, this.ordersPerPage || 10);
-    
-    alert(`Estado de la orden actualizado a: ${newStatus}`);
   }
 
   updateOrderStatusAndShowInvoiceOptions(orderId, newStatus) {
