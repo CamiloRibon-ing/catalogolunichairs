@@ -1005,7 +1005,7 @@ class AdminPanel {
                   <!-- Imágenes Adicionales -->
                   <div class="additional-images-section">
                     <h5>Imágenes Adicionales (Opcional)</h5>
-                    <div id="additional-images-container">
+                    <div id="additional-images-container" class="additional-images-gallery">
                       <!-- Se cargarán dinámicamente -->
                     </div>
                     <div class="additional-images-controls">
@@ -2776,34 +2776,21 @@ class AdminPanel {
   }
 
   updateOrdersStats(allOrders = null, filteredOrders = null) {
-    // Si no se pasan órdenes, obtener las actuales
-    if (!allOrders) {
-      allOrders = orderManager?.orders || [];
-    }
-    if (!filteredOrders) {
-      filteredOrders = allOrders;
-    }
-
-    const totalOrders = allOrders.length;
-    const filteredCount = filteredOrders.length;
-    const totalRevenue = allOrders.reduce((sum, order) => sum + (order.total || 0), 0);
-
-    // Actualizar elementos en el DOM
+    // Calcular métricas
     const totalEl = document.getElementById('orders-total');
     const revenueEl = document.getElementById('orders-revenue');
     const filteredEl = document.getElementById('filtered-orders-count');
 
-    if (totalEl) {
-      totalEl.textContent = totalOrders;
-    }
+    const orders = allOrders || (orderManager?.orders || []);
+    const filtered = filteredOrders || orders;
 
-    if (revenueEl) {
-      revenueEl.textContent = `$${totalRevenue.toLocaleString('es-CO')}`;
-    }
+    const totalOrders = orders.length;
+    const filteredCount = filtered.length;
+    const totalRevenue = filtered.reduce((sum, o) => sum + (o.total || 0), 0);
 
-    if (filteredEl) {
-      filteredEl.textContent = filteredCount;
-    }
+    if (totalEl) totalEl.textContent = totalOrders;
+    if (revenueEl) revenueEl.textContent = `$${totalRevenue.toLocaleString('es-CO')}`;
+    if (filteredEl) filteredEl.textContent = filteredCount;
 
     console.log(`📊 Estadísticas actualizadas: ${totalOrders} órdenes totales, ${filteredCount} filtradas, $${totalRevenue.toLocaleString('es-CO')} ingresos`);
   }
@@ -3007,43 +2994,59 @@ class AdminPanel {
       const productsToShow = this.allProducts.slice(startIndex, endIndex);
 
       // Renderizar productos de la página actual
-      productsList.innerHTML = productsToShow.map(product => `
-        <div class="admin-product-item">
-          <div class="product-status-badge ${product.available ? 'available' : 'unavailable'}">
-            ${product.available ? 'Disponible' : 'No disponible'}
-          </div>
-          <img src="${product.image || 'recursos/lunilogo.png'}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
-          <div class="product-info">
-            <h4>${product.name}</h4>
-            <div class="product-details-grid">
-              <div class="product-detail-item price">
-                <span class="label">Precio</span>
-                <span class="value">$${product.price.toLocaleString('es-CO')}</span>
-              </div>
-              <div class="product-detail-item stock ${product.stock <= 0 ? 'out' : product.stock <= 5 ? 'low' : ''}">
-                <span class="label">Stock</span>
-                <span class="value">${product.stock || 0}</span>
-              </div>
-              <div class="product-detail-item">
-                <span class="label">Categoría</span>
-                <span class="value">${this.formatCategoryName(product.category)}</span>
-              </div>
-              <div class="product-detail-item">
-                <span class="label">Color</span>
-                <span class="value">${product.color || 'N/A'}</span>
+      productsList.innerHTML = productsToShow.map(product => {
+        // Obtener la imagen principal usando parseProductImages si está disponible
+        let mainImage = 'recursos/lunilogo.png';
+        if (typeof productManager !== 'undefined' && productManager.parseProductImages) {
+          const images = productManager.parseProductImages(product);
+          if (images && images.length > 0) {
+            const primaryImg = images.find(img => img.primary) || images[0];
+            if (primaryImg && primaryImg.url) mainImage = primaryImg.url;
+          } else if (product.image) {
+            mainImage = product.image;
+          }
+        } else if (product.image) {
+          mainImage = product.image;
+        }
+
+        return `
+          <div class="admin-product-item">
+            <div class="product-status-badge ${product.available ? 'available' : 'unavailable'}">
+              ${product.available ? 'Disponible' : 'No disponible'}
+            </div>
+            <img src="${mainImage}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'">
+            <div class="product-info">
+              <h4>${product.name}</h4>
+              <div class="product-details-grid">
+                <div class="product-detail-item price">
+                  <span class="label">Precio</span>
+                  <span class="value">$${product.price.toLocaleString('es-CO')}</span>
+                </div>
+                <div class="product-detail-item stock ${product.stock <= 0 ? 'out' : product.stock <= 5 ? 'low' : ''}">
+                  <span class="label">Stock</span>
+                  <span class="value">${product.stock || 0}</span>
+                </div>
+                <div class="product-detail-item">
+                  <span class="label">Categoría</span>
+                  <span class="value">${this.formatCategoryName(product.category)}</span>
+                </div>
+                <div class="product-detail-item">
+                  <span class="label">Color</span>
+                  <span class="value">${product.color || 'N/A'}</span>
+                </div>
               </div>
             </div>
+            <div class="product-actions">
+              <button onclick="adminPanel.editProduct('${product.id}')" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+              <button onclick="adminPanel.deleteProduct('${product.id}')" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Eliminar
+              </button>
+            </div>
           </div>
-          <div class="product-actions">
-            <button onclick="adminPanel.editProduct('${product.id}')" class="btn btn-primary">
-              <i class="fas fa-edit"></i> Editar
-            </button>
-            <button onclick="adminPanel.deleteProduct('${product.id}')" class="btn btn-danger">
-              <i class="fas fa-trash"></i> Eliminar
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       // Renderizar controles de paginación
       this.renderPagination(this.totalProducts);
@@ -3296,18 +3299,22 @@ class AdminPanel {
       }
       
       // Llenar formulario con datos existentes
+      const form = document.getElementById('category-form');
+      form.style.display = 'block';
+      form.removeAttribute('disabled');
       document.getElementById('category-id').value = category.id;
       document.getElementById('category-name').value = category.name;
       document.getElementById('category-slug').value = category.slug;
       document.getElementById('category-icon').value = category.icon || '';
       document.getElementById('category-active').checked = category.active !== false;
-      
+
+      // Habilitar todos los campos por si acaso
+      const inputs = form.querySelectorAll('input, textarea, select, button');
+      inputs.forEach(input => input.removeAttribute('disabled'));
+
       // Cambiar título y botón
       document.getElementById('category-form-title').textContent = 'Editar Categoría';
       document.getElementById('save-category-btn').innerHTML = '<i class="fas fa-save"></i> Actualizar Categoría';
-      
-      // Mostrar formulario
-      document.getElementById('category-form').style.display = 'block';
       
     } catch (error) {
       console.error('❌ Error cargando categoría para editar:', error);
@@ -3350,7 +3357,20 @@ class AdminPanel {
     console.log('➕ Mostrando formulario nueva categoría');
     
     // Limpiar formulario
-    document.getElementById('category-form').reset();
+    const categoryForm = document.getElementById('category-form');
+    if (categoryForm && typeof categoryForm.reset === 'function') {
+      categoryForm.reset();
+    } else if (categoryForm) {
+      // Si no es un formulario, limpiar los campos manualmente
+      const inputs = categoryForm.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          input.checked = false;
+        } else {
+          input.value = '';
+        }
+      });
+    }
     document.getElementById('category-id').value = '';
     document.getElementById('category-active').checked = true;
     
@@ -3489,7 +3509,7 @@ class AdminPanel {
               <!-- Imágenes Adicionales -->
               <div class="additional-images-section">
                 <h5>Imágenes Adicionales (Opcional)</h5>
-                <div id="edit-additional-images-container">
+                <div id="edit-additional-images-container" class="additional-images-gallery">
                   <!-- Se cargarán dinámicamente las imágenes existentes -->
                 </div>
                 <div class="additional-images-controls">
@@ -4607,15 +4627,14 @@ class AdminPanel {
 
   // ===== GESTIÓN DE MÚLTIPLES IMÁGENES =====
   addAdditionalImageField() {
-    const container = document.getElementById('additional-images-list');
+    // Usar el contenedor correcto para imágenes adicionales
+    const container = document.getElementById('additional-images-container');
     if (!container) return;
-    
     const currentImages = container.querySelectorAll('.additional-image-item').length;
     if (currentImages >= 4) {
       alert('Máximo 4 imágenes adicionales permitidas');
       return;
     }
-    
     const imageId = `additional-image-${Date.now()}`;
     const imageItem = document.createElement('div');
     imageItem.className = 'additional-image-item';
@@ -4636,9 +4655,7 @@ class AdminPanel {
         <input type="text" class="additional-image-url" placeholder="URL de imagen" readonly>
       </div>
     `;
-    
     container.appendChild(imageItem);
-    
     // Configurar event listener para la nueva imagen
     const newInput = document.getElementById(`${imageId}-input`);
     if (newInput) {
