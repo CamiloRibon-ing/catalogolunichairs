@@ -45,6 +45,11 @@ for all
 using (true)
 with check (true);
 
+-- IMPORTANTE PRODUCCION:
+-- Esta politica abierta mantiene compatible el panel local actual.
+-- Para produccion con Supabase Auth, aplicar database/production_policies.sql
+-- y administrar con un usuario autenticado de Supabase.
+
 
 
 insert into categories (name, slug, icon, active) values
@@ -58,3 +63,12 @@ insert into categories (name, slug, icon, active) values
 ('Sets', 'sets', '🎁', true);
 
 select * from categories;
+
+create index if not exists products_available_created_at_idx
+on products (available, created_at desc);
+
+create index if not exists products_created_at_idx
+on products (created_at desc);
+
+create index if not exists categories_active_name_idx
+on categories (active, name);

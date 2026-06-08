@@ -566,7 +566,7 @@ class AdminPanel {
             <label for="login-username">
               <i class="fas fa-user"></i> Usuario
             </label>
-            <input type="text" id="login-username" required placeholder="Ingresa tu usuario">
+            <input type="text" id="login-username" required placeholder="Email de Supabase o usuario local">
           </div>
           <div class="form-group">
             <label for="login-password">
@@ -598,15 +598,16 @@ class AdminPanel {
     }
   }
 
-  handleLogin(e) {
+  async handleLogin(e) {
     e.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
 
-    const result = authSystem?.login(username, password);
+    const result = await authSystem?.login(username, password);
     if (result && result.success) {
       this.closeLoginModal();
       this.updateAuthUI();
+      this.showAdminPanel();
       this.showNotification('🎉 ¡Bienvenido al Panel de Administración!', 'success');
       // console.log('✅ Login exitoso');
     } else {

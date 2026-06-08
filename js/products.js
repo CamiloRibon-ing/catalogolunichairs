@@ -3,34 +3,77 @@ class ProductManager {
   constructor() {
     this.products = [];
     this.initialized = false;
+    this.fullyInitialized = false;
+    this.initializationPromise = null;
+    this.catalogPageCache = new Map();
     this.sizes = ['Pequeño', 'Mediano', 'Grande'];
   }
 
   // Inicializar y cargar productos
   async initialize() {
-    if (!this.initialized) {
+    if (this.fullyInitialized) {
+      return this.products;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = (async () => {
       // console.log('🚀 Inicializando ProductManager - solo productos de Supabase...');
       
-      // Cargar productos solo desde Supabase
-      this.products = await this.loadProductsFromSupabase();
+      const cachedProducts = this.loadProductCache();
+      if (cachedProducts?.length) {
+        this.products = cachedProducts;
+        this.initialized = true;
+        this.fullyInitialized = true;
+        this.refreshFromSupabase();
+        return this.products;
+      }
+
+      const loadedProducts = await this.loadProductsFromSupabase();
+      if (loadedProducts === null) {
+        throw new Error('No se pudieron cargar los productos');
+      }
+
+      this.products = loadedProducts;
       this.initialized = true;
+      this.fullyInitialized = true;
       
       // console.log(`✅ ProductManager inicializado con ${this.products.length} productos de Supabase`);
-    }
+      return this.products;
+    })().finally(() => {
+      this.initializationPromise = null;
+    });
+
+    return this.initializationPromise;
   }
 
   // Cargar productos desde Supabase
   async loadProductsFromSupabase() {
     try {
+      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      const restProducts = await this.loadProductsFast();
+      if (restProducts) {
+        return restProducts;
+      }
+
+      if (!client) {
+        console.error('Supabase Client no disponible al cargar productos');
+        return null;
+      }
       // console.log('📡 Conectando a Supabase para cargar productos...');
-      const { data, error } = await supabaseClient
+      const query = client
         .from('products')
-        .select('*')
+        .select('id,name,category,price,color,size,description,image,stock,available,created_at')
         .order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         // console.error('❌ Error cargando productos de Supabase:', error);
-        return [];
+        console.error('Error cargando productos de Supabase:', error);
+        return null;
       }
 
       if (!data || data.length === 0) {
@@ -41,6 +84,256 @@ class ProductManager {
       // console.log(`✅ ${data.length} productos cargados desde Supabase`);
 
       // Mapear productos de Supabase al formato local
+      const products = data.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: parseFloat(product.price),
+        color: product.color,
+        size: product.size,
+        image: product.image,
+        images: this.parseProductImages(product),
+        available: product.available,
+        stock: product.stock || 0,
+        description: product.description,
+        createdAt: new Date(product.created_at).getTime(),
+        fromSupabase: true
+      }));
+
+      this.saveProductCache(products);
+      return products;
+
+    } catch (error) {
+      // console.error('Error conectando a Supabase para productos:', error);
+      console.error('Error conectando a Supabase para productos:', error);
+      return [];
+    }
+  }
+
+  async refreshFromSupabase() {
+    try {
+      const products = await this.loadProductsFromSupabase();
+      if (!products) return;
+
+      this.products = products;
+      this.saveProductCache(products);
+
+      if (typeof window.renderProductCatalog === 'function') {
+        window.renderProductCatalog({ skipInitialize: true });
+      }
+    } catch (error) {
+      console.warn('No se pudo refrescar productos en segundo plano:', error);
+    }
+  }
+
+  async loadProductsFast() {
+    const config = window.SUPABASE_CONFIG;
+    if (!config?.url || !config?.anonKey || typeof fetch === 'undefined') {
+      return null;
+    }
+
+    try {
+      const columns = 'id,name,category,price,color,size,description,image,stock,available,created_at';
+      const url = `${config.url}/rest/v1/products?select=${columns}&order=created_at.desc`;
+      const response = await fetch(url, {
+        headers: {
+          apikey: config.anonKey,
+          Authorization: `Bearer ${config.anonKey}`,
+          Accept: 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Error REST cargando productos:', response.status, await response.text());
+        return null;
+      }
+
+      const data = await response.json();
+      const products = data.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: parseFloat(product.price),
+        color: product.color,
+        size: product.size,
+        image: product.image,
+        images: this.parseProductImages(product),
+        available: product.available,
+        stock: product.stock || 0,
+        description: product.description,
+        createdAt: new Date(product.created_at).getTime(),
+        fromSupabase: true
+      }));
+
+      this.saveProductCache(products);
+      return products;
+    } catch (error) {
+      console.error('Error REST conectando a Supabase para productos:', error);
+      return null;
+    }
+  }
+
+  mapSupabaseProducts(data) {
+    return (data || []).map(product => ({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: parseFloat(product.price),
+      color: product.color,
+      size: product.size,
+      image: product.image,
+      images: this.parseProductImages(product),
+      available: product.available,
+      stock: product.stock || 0,
+      description: product.description,
+      createdAt: new Date(product.created_at).getTime(),
+      fromSupabase: true
+    }));
+  }
+
+  mergeLoadedProducts(products) {
+    const productMap = new Map(this.products.map(product => [product.id, product]));
+    products.forEach(product => productMap.set(product.id, product));
+    this.products = Array.from(productMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    this.initialized = this.products.length > 0;
+  }
+
+  async loadCatalogPage({ page = 1, pageSize = 12, category = 'all' } = {}) {
+    const safePage = Math.max(1, Number(page) || 1);
+    const safePageSize = Math.max(1, Number(pageSize) || 12);
+    const cacheKey = `${category}:${safePage}:${safePageSize}`;
+
+    if (this.catalogPageCache.has(cacheKey)) {
+      return this.catalogPageCache.get(cacheKey);
+    }
+
+    const from = (safePage - 1) * safePageSize;
+    const to = from + safePageSize - 1;
+    const columns = 'id,name,category,price,color,size,description,image,stock,available,created_at';
+
+    try {
+      const config = window.SUPABASE_CONFIG;
+      if (config?.url && config?.anonKey && typeof fetch !== 'undefined') {
+        const categoryFilter = category && category !== 'all'
+          ? `&category=eq.${encodeURIComponent(category)}`
+          : '';
+        const url = `${config.url}/rest/v1/products?select=${columns}&available=eq.true${categoryFilter}&order=created_at.desc`;
+        const response = await fetch(url, {
+          headers: {
+            apikey: config.anonKey,
+            Authorization: `Bearer ${config.anonKey}`,
+            Accept: 'application/json',
+            Prefer: 'count=exact',
+            Range: `${from}-${to}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const products = this.mapSupabaseProducts(data);
+          const total = this.getTotalFromContentRange(response.headers.get('content-range')) || products.length;
+          const result = { products, total };
+          this.mergeLoadedProducts(products);
+          this.catalogPageCache.set(cacheKey, result);
+          return result;
+        }
+      }
+
+      const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+      if (!client) {
+        return { products: [], total: 0 };
+      }
+
+      let query = client
+        .from('products')
+        .select(columns, { count: 'exact' })
+        .eq('available', true)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (category && category !== 'all') {
+        query = query.eq('category', category);
+      }
+
+      const { data, error, count } = await query;
+      if (error) {
+        console.error('Error cargando pagina de productos:', error);
+        return { products: [], total: 0 };
+      }
+
+      const products = this.mapSupabaseProducts(data);
+      const result = { products, total: count || products.length };
+      this.mergeLoadedProducts(products);
+      this.catalogPageCache.set(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Error cargando pagina de productos:', error);
+      return { products: [], total: 0 };
+    }
+  }
+
+  getTotalFromContentRange(contentRange) {
+    if (!contentRange || !contentRange.includes('/')) return null;
+    const total = Number(contentRange.split('/').pop());
+    return Number.isFinite(total) ? total : null;
+  }
+
+  invalidateCatalogCache() {
+    this.catalogPageCache.clear();
+    localStorage.removeItem('luni_products_cache');
+    this.fullyInitialized = false;
+  }
+
+  saveProductCache(products) {
+    try {
+      localStorage.setItem('luni_products_cache', JSON.stringify({
+        products,
+        savedAt: Date.now()
+      }));
+    } catch (error) {
+      // Cache opcional.
+    }
+  }
+
+  loadProductCache() {
+    try {
+      const stored = localStorage.getItem('luni_products_cache');
+      if (!stored) return null;
+
+      const cache = JSON.parse(stored);
+      return Array.isArray(cache.products) ? cache.products : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async loadProductsFromRest() {
+    const config = window.SUPABASE_CONFIG;
+    if (!config?.url || !config?.anonKey || typeof fetch === 'undefined') {
+      return null;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+    try {
+      const url = `${config.url}/rest/v1/products?select=*&order=created_at.desc`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          apikey: config.anonKey,
+          Authorization: `Bearer ${config.anonKey}`,
+          Accept: 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        console.error('Error REST cargando productos:', response.status, await response.text());
+        return null;
+      }
+
+      const data = await response.json();
       return data.map(product => ({
         id: product.id,
         name: product.name,
@@ -48,42 +341,47 @@ class ProductManager {
         price: parseFloat(product.price),
         color: product.color,
         size: product.size,
-        image: product.image, // Imagen principal (compatibilidad)
-        images: this.parseProductImages(product), // Array de todas las imágenes
+        image: product.image,
+        images: this.parseProductImages(product),
         available: product.available,
         stock: product.stock || 0,
         description: product.description,
         createdAt: new Date(product.created_at).getTime(),
-        fromSupabase: true // Marcador para identificar origen
+        fromSupabase: true
       }));
-
     } catch (error) {
-      // console.error('Error conectando a Supabase para productos:', error);
-      return [];
+      console.error('Error REST conectando a Supabase para productos:', error);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
-  // Parsear imágenes de producto (soporta múltiples formatos)
+  withTimeout(promise, timeoutMs, message) {
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  }
+
   parseProductImages(product) {
-    // console.log('🔍 Parseando imágenes para:', product.name, 'Campo image:', product.image);
     const images = [];
     
-    // Verificar si el campo image contiene JSON con múltiples imágenes
     if (product.image) {
       try {
-        // Intentar parsear como JSON
         const imageData = JSON.parse(product.image);
         
-        // Si es un objeto con main y additional
         if (imageData && typeof imageData === 'object' && imageData.main) {
-          // Agregar imagen principal
           images.push({
             url: imageData.main,
             alt: `${product.name} - Imagen principal`,
             primary: true
           });
           
-          // Agregar imágenes adicionales
           if (imageData.additional && Array.isArray(imageData.additional)) {
             imageData.additional.forEach((imgUrl, index) => {
               images.push({
@@ -94,7 +392,6 @@ class ProductManager {
             });
           }
         } else {
-          // Si el JSON no tiene la estructura esperada, usar como imagen simple
           images.push({
             url: product.image,
             alt: `${product.name} - Imagen principal`,
@@ -102,7 +399,6 @@ class ProductManager {
           });
         }
       } catch (error) {
-        // No es JSON, es una URL simple
         images.push({
           url: product.image,
           alt: `${product.name} - Imagen principal`,
@@ -273,7 +569,10 @@ class ProductManager {
       
       // Recargar productos para mantener sincronización
       this.initialized = false; // Forzar reinicialización
-      await this.initialize();
+      this.invalidateCatalogCache();
+      if (data) {
+        this.mergeLoadedProducts(this.mapSupabaseProducts([data]));
+      }
       return true;
       
     } catch (error) {
@@ -369,7 +668,10 @@ class ProductManager {
         
         // Recargar productos para mantener sincronización
         this.initialized = false; // Forzar reinicialización
-        await this.initialize();
+        this.invalidateCatalogCache();
+        if (data) {
+          this.mergeLoadedProducts(this.mapSupabaseProducts([data]));
+        }
         return true;
       } else {
         // Todos los productos son de Supabase ahora
@@ -406,6 +708,7 @@ class ProductManager {
 
       // Eliminar de lista local en memoria
       this.products = this.products.filter(p => p.id !== id);
+      this.invalidateCatalogCache();
       // console.log('✅ Producto eliminado de la lista local');
       return true;
 
@@ -483,16 +786,6 @@ class ProductManager {
 const productManager = new ProductManager();
 
 // Inicializar productos cuando se cargue la página
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await productManager.initialize();
-    // console.log('ProductManager inicializado correctamente');
-    // console.log('Productos cargados:', productManager.getAllProducts().length);
-  } catch (error) {
-    // console.error('Error inicializando ProductManager:', error);
-  }
-});
-
 // Función auxiliar para esperar a que ProductManager esté listo
 async function waitForProducts() {
   if (!productManager.initialized) {

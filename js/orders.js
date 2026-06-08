@@ -3,12 +3,22 @@ class OrderManager {
   constructor() {
     this.orders = [];
     this.isLoading = false;
-    this.init();
+    this.initialized = false;
   }
 
   async init() {
     // console.log('🔧 Inicializando OrderManager con Supabase...');
+    return this.initialize();
+  }
+
+  async initialize() {
+    if (this.initialized) {
+      return this.orders;
+    }
+
     await this.loadOrders();
+    this.initialized = true;
+    return this.orders;
   }
 
   async loadOrders() {
@@ -317,7 +327,8 @@ class OrderManager {
 
   // Método para refrescar datos desde Supabase
   async refresh() {
-    return await this.loadOrders();
+    this.initialized = false;
+    return await this.initialize();
   }
 
   // Método para obtener órdenes de un período específico
@@ -341,11 +352,10 @@ if (typeof window !== 'undefined') {
   window.orderManager = orderManager;
   
   // Forzar inicialización después de que todo esté cargado
-  if (document.readyState === 'loading') {
+  if (false && document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', async () => {
         // console.log('📋 Re-inicializando OrderManager después de DOM ready...');
       await orderManager.init();
     });
   }
 }
-

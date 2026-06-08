@@ -18,7 +18,6 @@ class Cart {
     }
     
     if (typeof productManager !== 'undefined') {
-      await productManager.initialize();
       // console.log('✅ Cart inicializado con ProductManager');
     } else {
       // console.warn('⚠️ Cart inicializado sin ProductManager (modo offline)');
@@ -30,7 +29,25 @@ class Cart {
 
   loadCart() {
     const stored = localStorage.getItem('luni_cart');
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+
+    try {
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed.filter(item =>
+        item &&
+        item.productId &&
+        Number.isFinite(Number(item.quantity)) &&
+        Number(item.quantity) > 0
+      ).map(item => ({
+        ...item,
+        quantity: Number(item.quantity)
+      }));
+    } catch (error) {
+      localStorage.removeItem('luni_cart');
+      return [];
+    }
   }
 
   saveCart() {
@@ -39,12 +56,18 @@ class Cart {
   }
 
   addItem(productId, quantity = 1, color = '', size = '') {
+    try {
+    quantity = Math.max(1, Number(quantity) || 1);
     // console.log('🛒 cart.addItem llamado con:', { productId, quantity, color, size });
     
     // Verificar que productManager esté disponible
     if (typeof productManager === 'undefined') {
       // console.error('❌ ProductManager no está disponible');
       return { success: false, message: 'Sistema no inicializado correctamente' };
+    }
+
+    if (!productManager.initialized) {
+      return { success: false, message: 'Los productos aun se estan cargando. Intenta nuevamente en unos segundos.' };
     }
 
     // Verificar disponibilidad
@@ -102,6 +125,10 @@ class Cart {
     
     // console.log('✅ Producto agregado exitosamente al carrito');
     return { success: true, message: 'Producto agregado al carrito' };
+    } catch (error) {
+      console.error('Error en cart.addItem:', error);
+      return { success: false, message: error.message || 'Error al agregar el producto' };
+    }
   }
 
   removeItem(index) {
@@ -152,11 +179,15 @@ class Cart {
   }
 
   getItemCount() {
-    return this.items.reduce((count, item) => count + item.quantity, 0);
+    if (typeof productManager !== 'undefined' && !productManager.initialized) {
+      return 0;
+    }
+
+    return this.getItems().reduce((count, item) => count + item.quantity, 0);
   }
 
   getItems() {
-    return this.items.map(item => {
+    return this.items.filter(item => item && item.productId).map(item => {
       // Si productManager no está disponible, usar datos básicos
       if (typeof productManager === 'undefined') {
         // console.warn('⚠️ ProductManager no disponible para obtener detalles del producto');
@@ -177,6 +208,18 @@ class Cart {
         product: product || null
       };
     }).filter(item => item.product !== null);
+  }
+
+  removeInvalidItems() {
+    if (typeof productManager === 'undefined' || !productManager.initialized) {
+      return;
+    }
+
+    const validItems = this.items.filter(item => productManager.getProduct(item.productId));
+    if (validItems.length !== this.items.length) {
+      this.items = validItems;
+      this.saveCart();
+    }
   }
 
   updateCartUI() {

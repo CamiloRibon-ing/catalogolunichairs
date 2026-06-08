@@ -732,17 +732,17 @@
                 }
                 
                 // Cargar órdenes filtradas
-                if (typeof adminPanel !== 'undefined' && adminPanel.loadOrdersList) {
-                    await adminPanel.loadOrdersList(status);
-                    adminPanel.updateOrdersStats();
+                if (window.adminPanel && window.adminPanel.loadOrdersList) {
+                    await window.adminPanel.loadOrdersList(status);
+                    window.adminPanel.updateOrdersStats();
                     // console.log('✅ Órdenes filtradas cargadas para estado:', status);
                 } else {
                     // console.warn('⚠️ adminPanel no disponible aún, reintentando...');
                     // Reintentar después de un momento
                     setTimeout(() => {
-                        if (typeof adminPanel !== 'undefined') {
-                            adminPanel.loadOrdersList(status);
-                            adminPanel.updateOrdersStats();
+                        if (window.adminPanel) {
+                            window.adminPanel.loadOrdersList(status);
+                            window.adminPanel.updateOrdersStats();
                         }
                     }, 1000);
                 }
@@ -754,6 +754,7 @@
         
         // Función de debug para verificar estado de inicialización
         window.debugInitialization = function() {
+            return {};
             const status = {
                 invoiceGenerator: typeof window.invoiceGenerator !== 'undefined' && window.invoiceGenerator,
                 initFunction: typeof window.initializeInvoiceGenerator !== 'undefined',
@@ -870,6 +871,7 @@
 
         // DOMContentLoaded principal
         document.addEventListener('DOMContentLoaded', function() {
+            return;
             // console.log('🏁 DOM cargado, iniciando componentes...');
             
             // Función para verificar e inicializar componentes
@@ -978,21 +980,15 @@
 
 <!-- ================= LIBRERÍAS ================= -->
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <!-- ================= SISTEMA ================= -->
 <script src="js/auth.js"></script>
 <script src="js/categories.js"></script>
 <script src="js/products.js"></script>
-<script src="js/cloudinary.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/orders.js"></script>
-<script src="js/invoice.js"></script>
 <script src="js/checkout.js"></script>
-<script src="js/statistics.js"></script>
-<script src="js/test-orders-admin.js"></script>
-<script src="js/admin.js"></script>
+<!-- <script src="js/test-orders-admin.js"></script> -->
 <script src="js/main.js"></script>
 
 <!-- ================= VERCEL ================= -->

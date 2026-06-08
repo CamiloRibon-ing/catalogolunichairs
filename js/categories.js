@@ -1,25 +1,43 @@
-// Sistema de gestión de categorías conectado a Supabase
 class CategoryManager {
   constructor() {
     this.categories = [];
     this.initialized = false;
+    this.initializationPromise = null;
   }
 
-  // Inicializar y cargar categorías desde Supabase
   async initialize() {
-    if (!this.initialized) {
+    if (this.initialized) {
+      return this.categories;
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = (async () => {
       await this.loadCategories();
       this.initialized = true;
-    }
+      return this.categories;
+    })().finally(() => {
+      this.initializationPromise = null;
+    });
+
+    return this.initializationPromise;
   }
 
-  // Cargar categorías desde Supabase
   async loadCategories() {
     try {
-      const { data, error } = await supabaseClient
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        this.categories = this.getDefaultCategories();
+        return false;
+      }
+
+      const query = supabaseClient
         .from('categories')
         .select('*')
         .order('name', { ascending: true });
+
+      const { data, error } = await this.withTimeout(query, 20000, 'Tiempo agotado cargando categorias');
 
       if (error) {
         console.error('Error cargando categorías:', error);
@@ -27,7 +45,6 @@ class CategoryManager {
         return false;
       }
 
-      // Mapear los datos de Supabase al formato local
       this.categories = data.map(cat => ({
         id: cat.id,
         name: cat.name,
@@ -46,7 +63,17 @@ class CategoryManager {
     }
   }
 
-  // Categorías por defecto si no se puede conectar a Supabase
+  withTimeout(promise, timeoutMs, message) {
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  }
+
   getDefaultCategories() {
     return [
       { id: '1', name: 'Ganchitos', slug: 'ganchitos', icon: '🎀', active: true, createdAt: Date.now() },
@@ -214,15 +241,6 @@ class CategoryManager {
 const categoryManager = new CategoryManager();
 
 // Inicializar categorías cuando se cargue la página
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await categoryManager.initialize();
-    console.log('CategoryManager inicializado correctamente');
-  } catch (error) {
-    console.error('Error inicializando CategoryManager:', error);
-  }
-});
-
 // Función auxiliar para esperar a que CategoryManager esté listo
 async function waitForCategories() {
   if (!categoryManager.initialized) {

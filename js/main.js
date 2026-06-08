@@ -1,14 +1,33 @@
-// Script principal que integra todo el sistema
 // ====== PRELOADER ======
-window.addEventListener('load', () => {
+function markAppVisualReady() {
   document.body.classList.add('loaded');
-});
+  const loadingElement = document.getElementById('loading-status');
+  if (loadingElement) {
+    loadingElement.style.display = 'none';
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', markAppVisualReady, { once: true });
+} else {
+  markAppVisualReady();
+}
+
+window.addEventListener('load', markAppVisualReady);
 
 // ====== Inicializar AOS ======
-AOS.init({ duration: 800, once: true });
+if (typeof AOS !== 'undefined') {
+  AOS.init({ duration: 800, once: true });
+}
+
+const catalogState = {
+  page: 1,
+  pageSize: 12,
+  category: 'all'
+};
 
 // ====== Renderizar catálogo de productos ======
-window.renderProductCatalog = async function() {
+window.renderProductCatalog = async function(options = {}) {
   //console.log('🔄 Iniciando renderizado del catálogo...');
   
   const productGrid = document.querySelector('.product-grid');
@@ -21,15 +40,21 @@ window.renderProductCatalog = async function() {
   productGrid.innerHTML = '<p style="grid-column: 1/-1; padding: 2rem; text-align: center;">⏳ Cargando productos...</p>';
 
   try {
-    await productManager.initialize();
-    const products = productManager.getAvailableProducts();
+    const catalogPage = await productManager.loadCatalogPage({
+      page: catalogState.page,
+      pageSize: catalogState.pageSize,
+      category: catalogState.category
+    });
+    const products = catalogPage.products;
+    const totalProducts = catalogPage.total;
+    const visibleProducts = products;
     
     //console.log(`📦 ${products.length} productos disponibles para renderizar`);
     
     // Limpiar contenedor
     productGrid.innerHTML = '';
 
-    if (products.length === 0) {
+    if (totalProducts === 0) {
       productGrid.innerHTML = `
         <div style="grid-column: 1/-1; padding: 4rem; text-align: center; color: #666;">
           <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
@@ -42,8 +67,10 @@ window.renderProductCatalog = async function() {
     }
 
     // Renderizar cada producto
-    products.forEach((product, index) => {
-      setTimeout(() => {
+    const fragment = document.createDocumentFragment();
+
+    visibleProducts.forEach((product) => {
+      {
         //console.log(`🏷️ Renderizando producto: ${product.name} (${product.id})`);
         
         const card = document.createElement('div');
@@ -81,21 +108,24 @@ window.renderProductCatalog = async function() {
         `;
 
         //console.log(`✅ Producto ${product.name} agregado al DOM`);
-        productGrid.appendChild(card);
+        fragment.appendChild(card);
         
         // Re-inicializar AOS para las nuevas cards
-        if (typeof AOS !== 'undefined') {
-          AOS.refresh();
-        }
-      }, index * 50); // Stagger la animación
+      }
     });
 
     //console.log('✅ Catálogo renderizado exitosamente');
     
+    productGrid.appendChild(fragment);
+
+    renderCatalogPagination(productGrid, totalProducts);
+
+    if (typeof AOS !== 'undefined') {
+      AOS.refresh();
+    }
+
     // Re-inicializar filtros después de que se rendericen los productos
-    setTimeout(() => {
-      initFilters();
-    }, products.length * 50 + 100);
+    initFilters();
     
   } catch (error) {
     //console.error('❌ Error renderizando catálogo:', error);
@@ -104,7 +134,7 @@ window.renderProductCatalog = async function() {
     // Reintentar después de 2 segundos
     setTimeout(() => {
       renderProductCatalog();
-    }, 2000);
+    }, 5000);
   }
 };
 
@@ -116,12 +146,13 @@ window.openProductModal = async function(productId) {
   
   try {
     // Verificar que productManager esté disponible y si no, esperar a que se inicialice
-    if (!productManager || !productManager.initialized) {
+    let product = productManager.getProduct(productId);
+    if (!product && !productManager.fullyInitialized) {
       //console.log('⏳ Esperando a que ProductManager se inicialice...');
       await productManager.initialize();
+      product = productManager.getProduct(productId);
     }
     
-    const product = productManager.getProduct(productId);
     
     if (!product) {
       //console.error('❌ Producto no encontrado:', productId);
@@ -377,12 +408,12 @@ async function generateCategoryFilters() {
     //console.log(`📁 Categorías activas encontradas: ${categories.length}`);
     
     // Crear HTML para filtros
-    let filtersHTML = '<button class="filter-btn active" data-category="all">Todos</button>';
+    let filtersHTML = `<button class="filter-btn ${catalogState.category === 'all' ? 'active' : ''}" data-category="all">Todos</button>`;
     
     categories.forEach(category => {
       const categoryName = category.name || formatCategoryName(category.slug);
       const icon = category.icon ? `${category.icon} ` : '';
-      filtersHTML += `<button class="filter-btn" data-category="${category.slug}">${icon}${categoryName}</button>`;
+      filtersHTML += `<button class="filter-btn ${catalogState.category === category.slug ? 'active' : ''}" data-category="${category.slug}">${icon}${categoryName}</button>`;
     });
     
     // Insertar en el DOM
@@ -412,7 +443,7 @@ async function generateCategoryFilters() {
  * Extrae la URL de la imagen principal de un producto
  * Maneja tanto el formato simple (URL string) como el formato JSON con múltiples imágenes
  */
-function getProductMainImageUrl(product) {
+function getProductMainImageUrl(product, width = 700) {
   if (!product.image) {
     return 'recursos/lunilogo.png';
   }
@@ -420,7 +451,7 @@ function getProductMainImageUrl(product) {
   // Si product.images ya está parseado, usar la imagen principal
   if (product.images && product.images.length > 0) {
     const mainImage = product.images.find(img => img.primary) || product.images[0];
-    return mainImage.url || mainImage;
+      return optimizeImageUrl(mainImage.url || mainImage, width);
   }
   
   try {
@@ -429,21 +460,27 @@ function getProductMainImageUrl(product) {
     
     // Si es un objeto con main y additional
     if (imageData && typeof imageData === 'object' && imageData.main) {
-      return imageData.main;
+      return optimizeImageUrl(imageData.main, width);
     } else {
       // Si el JSON no tiene la estructura esperada, usar como imagen simple
-      return product.image;
+      return optimizeImageUrl(product.image, width);
     }
   } catch (error) {
     // No es JSON, es una URL simple
-    return product.image;
+    return optimizeImageUrl(product.image, width);
   }
+}
+
+function optimizeImageUrl(url, width = 700) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('res.cloudinary.com') || url.includes('/f_auto,')) return url;
+  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
 }
 
 // ====== FUNCIONES PARA MÚLTIPLES IMÁGENES ======
 function generateProductGalleryHTML(product) {
   // En el catálogo, siempre mostrar solo la imagen principal para un look más limpio
-  const mainImageUrl = getProductMainImageUrl(product);
+  const mainImageUrl = getProductMainImageUrl(product, 480);
   return `<img src="${mainImageUrl}" alt="${product.name}" onerror="this.src='recursos/lunilogo.png'" loading="lazy">`;
 }
 
@@ -520,6 +557,40 @@ window.navigateGallery = navigateGallery;
 window.selectGalleryImage = selectGalleryImage;
 window.getProductMainImageUrl = getProductMainImageUrl;
 
+window.goToCatalogPage = function(page) {
+  catalogState.page = Math.max(1, page);
+  renderProductCatalog({ skipInitialize: true });
+  document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+function renderCatalogPagination(container, totalProducts) {
+  const totalPages = Math.ceil(totalProducts / catalogState.pageSize);
+  if (totalPages <= 1) return;
+
+  catalogState.page = Math.min(catalogState.page, totalPages);
+
+  const pagination = document.createElement('nav');
+  pagination.className = 'catalog-pagination';
+  pagination.setAttribute('aria-label', 'Paginacion del catalogo');
+
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  pagination.innerHTML = `
+    <button class="catalog-page-btn" ${catalogState.page === 1 ? 'disabled' : ''} onclick="goToCatalogPage(${catalogState.page - 1})">
+      Anterior
+    </button>
+    ${pages.map(page => `
+      <button class="catalog-page-btn ${page === catalogState.page ? 'active' : ''}" onclick="goToCatalogPage(${page})">
+        ${page}
+      </button>
+    `).join('')}
+    <button class="catalog-page-btn" ${catalogState.page === totalPages ? 'disabled' : ''} onclick="goToCatalogPage(${catalogState.page + 1})">
+      Siguiente
+    </button>
+  `;
+
+  container.appendChild(pagination);
+}
+
 // ====== FILTROS DE PRODUCTOS ======
 function initFilters() {
   const filterBtns = document.querySelectorAll(".filter-btn");
@@ -543,6 +614,12 @@ function initFilters() {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       const category = btn.dataset.category;
+      catalogState.category = category;
+      catalogState.page = 1;
+      newFilterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProductCatalog({ skipInitialize: true });
+      return;
       //console.log(`📂 Filtro seleccionado: "${category}"`);
 
       const allCards = document.querySelectorAll(".card");
@@ -630,8 +707,17 @@ window.addToCart = async function(productId) {
   }
 
   try {
-    await productManager.initialize();
-    const product = productManager.getProduct(productId);
+    let product = productManager.getProduct(productId);
+    if (!product && !productManager.fullyInitialized) {
+      await productManager.initialize();
+      product = productManager.getProduct(productId);
+    }
+
+    if (!productManager.initialized) {
+      showNotification('Los productos aun se estan cargando. Intenta de nuevo.', 'error');
+      return;
+    }
+
     if (!product) {
       //console.error('❌ Producto no encontrado:', productId);
       showNotification('Producto no encontrado', 'error');
@@ -655,7 +741,8 @@ window.addToCart = async function(productId) {
     }
   } catch (error) {
     //console.error('❌ Error en addToCart:', error);
-    showNotification('Error al agregar el producto', 'error');
+    console.error('Error en addToCart:', error);
+    showNotification(error.message || 'Error al agregar el producto', 'error');
   }
 }
 
@@ -846,7 +933,200 @@ window.addEventListener('click', (e) => {
 });
 
 // ====== Inicializar cuando el DOM esté listo ======
+// ====== Carga bajo demanda del panel admin ======
+const adminScriptSources = [
+  'js/cloudinary.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'js/invoice.js',
+  'js/statistics.js',
+  'js/admin.js'
+];
+
+const loadedScriptPromises = {};
+let adminPanelPromise = null;
+let adminSessionRestoreStarted = false;
+
+function getStoredAdminUser() {
+  try {
+    const storedUser = localStorage.getItem('luni_current_user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function createHeaderAdminButton() {
+  if (document.getElementById('admin-btn')) {
+    return;
+  }
+
+  const userActions = document.querySelector('.user-actions');
+  const logoutBtn = document.getElementById('header-logout-btn');
+  if (!userActions || !logoutBtn) {
+    return;
+  }
+
+  const adminBtn = document.createElement('button');
+  adminBtn.id = 'admin-btn';
+  adminBtn.className = 'btn-admin-header';
+  adminBtn.innerHTML = '<i class="fas fa-cogs"></i><span class="btn-text">Panel Admin</span>';
+  adminBtn.addEventListener('click', async () => {
+    try {
+      adminBtn.disabled = true;
+      const panel = await ensureAdminPanel();
+      panel.showAdminPanel();
+    } catch (error) {
+      showNotification('No se pudo cargar el panel de administracion', 'error');
+    } finally {
+      adminBtn.disabled = false;
+    }
+  });
+
+  userActions.insertBefore(adminBtn, logoutBtn);
+}
+
+function syncHeaderAuthUI() {
+  const loginBtn = document.getElementById('header-login-btn');
+  const userMenu = document.getElementById('user-menu');
+  const usernameSpan = document.getElementById('current-username');
+  const storedAuth = localStorage.getItem('luni_admin_auth') === 'true';
+  const currentUser = window.authSystem?.getCurrentUser?.() || getStoredAdminUser();
+  const isLoggedIn = storedAuth || Boolean(currentUser);
+  const displayUser = currentUser || { name: 'Administrador', username: 'Admin' };
+
+  if (isLoggedIn) {
+    if (currentUser && localStorage.getItem('luni_admin_auth') !== 'true') {
+      localStorage.setItem('luni_admin_auth', 'true');
+    }
+    if (loginBtn) loginBtn.style.setProperty('display', 'none', 'important');
+    if (userMenu) userMenu.style.setProperty('display', 'flex', 'important');
+    if (usernameSpan) usernameSpan.textContent = displayUser.name || displayUser.username || 'Admin';
+    createHeaderAdminButton();
+    return;
+  }
+
+  if (loginBtn) loginBtn.style.setProperty('display', 'flex', 'important');
+  if (userMenu) userMenu.style.setProperty('display', 'none', 'important');
+
+  const adminBtn = document.getElementById('admin-btn');
+  if (adminBtn) adminBtn.remove();
+}
+
+window.syncHeaderAuthUI = syncHeaderAuthUI;
+window.addEventListener('luni-auth-changed', syncHeaderAuthUI);
+
+function setupHeaderLogoutFallback() {
+  const logoutBtn = document.getElementById('header-logout-btn');
+  if (!logoutBtn || logoutBtn.hasAttribute('data-main-logout-listener')) {
+    return;
+  }
+
+  logoutBtn.setAttribute('data-main-logout-listener', 'true');
+  logoutBtn.addEventListener('click', () => {
+    if (window.authSystem?.logout) {
+      window.authSystem.logout();
+      return;
+    }
+
+    localStorage.removeItem('luni_current_user');
+    localStorage.removeItem('luni_admin_auth');
+    localStorage.removeItem('luni_auth_provider');
+    window.location.reload();
+  });
+}
+
+function loadScriptOnce(src) {
+  if (loadedScriptPromises[src]) {
+    return loadedScriptPromises[src];
+  }
+
+  loadedScriptPromises[src] = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${src}"]`);
+    if (existingScript) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+    document.body.appendChild(script);
+  });
+
+  return loadedScriptPromises[src];
+}
+
+async function ensureAdminPanel() {
+  if (window.adminPanel) {
+    return window.adminPanel;
+  }
+
+  if (adminPanelPromise) {
+    return adminPanelPromise;
+  }
+
+  adminPanelPromise = (async () => {
+    for (const src of adminScriptSources) {
+      await loadScriptOnce(src);
+    }
+
+    if (!window.adminPanel) {
+      throw new Error('El panel admin no se inicializo correctamente');
+    }
+
+    window.adminPanel.updateAuthUI();
+    window.adminPanel.setupHeaderListeners();
+    return window.adminPanel;
+  })().finally(() => {
+    adminPanelPromise = null;
+  });
+
+  return adminPanelPromise;
+}
+
+function setupLazyAdminAccess() {
+  syncHeaderAuthUI();
+  setupHeaderLogoutFallback();
+
+  const loginBtn = document.getElementById('header-login-btn');
+  if (loginBtn && !loginBtn.hasAttribute('data-lazy-admin-listener')) {
+    loginBtn.setAttribute('data-lazy-admin-listener', 'true');
+    loginBtn.setAttribute('data-listener', 'true');
+    loginBtn.addEventListener('click', async () => {
+      try {
+        loginBtn.disabled = true;
+        const panel = await ensureAdminPanel();
+        panel.showLoginModal();
+      } catch (error) {
+        showNotification('No se pudo cargar el panel de administracion', 'error');
+      } finally {
+        loginBtn.disabled = false;
+      }
+    });
+  }
+
+  const hasStoredAdminSession = localStorage.getItem('luni_admin_auth') === 'true' || Boolean(getStoredAdminUser());
+  if (hasStoredAdminSession && !adminSessionRestoreStarted) {
+    adminSessionRestoreStarted = true;
+    setTimeout(async () => {
+      try {
+        const panel = await ensureAdminPanel();
+        panel.updateAuthUI();
+        syncHeaderAuthUI();
+      } catch (error) {
+        syncHeaderAuthUI();
+      }
+    }, 0);
+  }
+}
+
+window.ensureAdminPanel = ensureAdminPanel;
+
 document.addEventListener('DOMContentLoaded', () => {
+  setupLazyAdminAccess();
   //console.log('🚀 DOM cargado, iniciando aplicación...');
   
   // Actualizar UI de autenticación
@@ -922,11 +1202,12 @@ async function initializeApp() {
     
     //console.log('✅ Grilla de productos encontrada');
     
-    // Inicializar managers
-    await categoryManager.initialize();
+    // El catalogo publico carga productos por paginas para evitar traer todo al inicio.
+    if (typeof cart !== 'undefined' && cart?.updateCartUI) {
+      cart.updateCartUI();
+    }
     //console.log('✅ CategoryManager inicializado');
     
-    await productManager.initialize();
     //console.log('✅ ProductManager inicializado');
     
     // Renderizar catálogo
@@ -934,10 +1215,10 @@ async function initializeApp() {
     //console.log('✅ Catálogo renderizado');
     
     // Generar filtros dinámicos y configurar eventos
-    setTimeout(async () => {
+    {
       await generateCategoryFilters();
       //console.log('✅ Filtros dinámicos generados');
-    }, 200);
+    }
     
     //console.log('✅ Aplicación inicializada correctamente');
   } catch (error) {
@@ -950,4 +1231,5 @@ async function initializeApp() {
     }, 1000);
   }
 }
+
 

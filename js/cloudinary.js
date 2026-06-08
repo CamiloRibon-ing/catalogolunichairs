@@ -1,9 +1,6 @@
-// Integración con Cloudinary
 class CloudinaryUploader {
   constructor() {
     this.cloudName = 'dczdtij3q';
-    this.apiKey = '524963822198547';
-    this.apiSecret = 'Oof6Dx6mNkHxIKMQPG2ZOR8mI7o'; // Solo para referencia, no se usa en frontend
     this.uploadPreset = 'luni_products';
     this.uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
   }
@@ -14,9 +11,6 @@ class CloudinaryUploader {
       formData.append('file', file);
       formData.append('upload_preset', this.uploadPreset);
       formData.append('folder', 'luni_products');
-      // No se necesita api_key para uploads unsigned con preset
-
-      // Usar unsigned upload con preset
       const xhr = new XMLHttpRequest();
       xhr.open('POST', this.uploadUrl, true);
 

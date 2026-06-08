@@ -1,11 +1,8 @@
-// Configuración de variables de entorno para Vercel
 const getEnvVar = (name, fallback) => {
-  // En Vercel, las variables están en window.__ENV__ o directamente disponibles
   if (typeof window !== 'undefined' && window.__ENV__) {
     return window.__ENV__[name] || fallback;
   }
   
-  // Fallback para desarrollo local
   return fallback;
 };
 
@@ -17,13 +14,16 @@ const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1N
 // console.log('🔑 Supabase library disponible:', typeof window.supabase);
 // console.log('🌍 Entorno:', typeof window.__ENV__ !== 'undefined' ? 'Producción (Vercel)' : 'Desarrollo');
 
-// Validar que la librería esté disponible
 if (typeof window.supabase === 'undefined') {
   // console.error('❌ Supabase library no está disponible. Verifica que el CDN esté cargado.');
 }
 
 let supabaseClient;
 try {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Faltan variables de entorno de Supabase');
+  }
+
   supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
@@ -35,11 +35,14 @@ try {
 
 // console.log('🔍 Client details: ...')
 
-// Hacer disponible globalmente para debug
 if (typeof window !== 'undefined') {
+  window.SUPABASE_CONFIG = {
+    url: SUPABASE_URL,
+    anonKey: SUPABASE_ANON_KEY
+  };
+
   window.supabaseClient = supabaseClient;
   
-  // Función de test para verificar conexión
   window.testSupabaseConnection = async function() {
     try {
       // console.log('🧪 Probando conexión a Supabase...');
